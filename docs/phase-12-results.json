@@ -1,0 +1,70 @@
+{
+  "benchmark": {
+    "date": "2026-10-29",
+    "corpus_type": "LARGE_CONTROLLED_SUBSET",
+    "raw_records": 400,
+    "unique_article_ids": 200,
+    "unique_contents": 199,
+    "duplicates_removed": 201,
+    "new_chunks": 199,
+    "embedded_chunks": 199,
+    "database_chunks_evaluated": 209,
+    "ingestion_duration_seconds": 140.286,
+    "query_count": 50,
+    "top_k": 5,
+    "embedding_model": "BAAI/bge-m3",
+    "embedding_dimension": 1024,
+    "selected_strategy": "hnsw_dense"
+  },
+  "results": [
+    {
+      "strategy": "exact_dense",
+      "hit_at_k": 0.96,
+      "recall_at_k": 0.96,
+      "mrr": 0.8446666666666667,
+      "latency_mean_ms": 5.429030000032071,
+      "latency_median_ms": 3.370199999608303,
+      "latency_p95_ms": 6.158099999993283,
+      "reranking_mean_ms": 0.0,
+      "exact_plan": true
+    },
+    {
+      "strategy": "hnsw_dense",
+      "hit_at_k": 0.96,
+      "recall_at_k": 0.96,
+      "mrr": 0.8446666666666667,
+      "latency_mean_ms": 3.987059999963094,
+      "latency_median_ms": 3.691750000598404,
+      "latency_p95_ms": 6.233699999938835,
+      "reranking_mean_ms": 0.0,
+      "hnsw_plan": true,
+      "ef_search": 40
+    },
+    {
+      "strategy": "hybrid_rrf",
+      "hit_at_k": 0.96,
+      "recall_at_k": 0.96,
+      "mrr": 0.7713333333333332,
+      "latency_mean_ms": 69.00491200001852,
+      "latency_median_ms": 68.80769999952463,
+      "latency_p95_ms": 74.32930000049964,
+      "reranking_mean_ms": 0.0,
+      "dense_candidates": 20,
+      "sparse_candidates": 20,
+      "rrf_k": 60
+    },
+    {
+      "strategy": "hybrid_rerank",
+      "hit_at_k": 0.98,
+      "recall_at_k": 0.98,
+      "mrr": 0.8463333333333334,
+      "latency_mean_ms": 13067.815295999992,
+      "latency_median_ms": 8221.624000000247,
+      "latency_p95_ms": 9935.953000000154,
+      "reranking_mean_ms": 12967.329726000062,
+      "reranker_model": "BAAI/bge-reranker-v2-m3",
+      "device": "cpu",
+      "candidate_size": 20
+    }
+  ]
+}

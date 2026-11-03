@@ -1,0 +1,45 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.ruff_cache/
+
+# Frontend
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# Local data and build artifacts
+healthcare-backend/data/*
+!healthcare-backend/data/.gitkeep
+!healthcare-backend/data/rag/
+healthcare-backend/data/rag/*
+!healthcare-backend/data/rag/raw/
+!healthcare-backend/data/rag/processed/
+healthcare-backend/data/rag/raw/*
+healthcare-backend/data/rag/processed/*
+!healthcare-backend/data/rag/raw/.gitkeep
+!healthcare-backend/data/rag/processed/.gitkeep
+*.log
+
+# Editors and operating system
+.idea/
+.vscode/
+*.swp
+*.swo
+~$*
+.DS_Store
+Thumbs.db
+Desktop.ini

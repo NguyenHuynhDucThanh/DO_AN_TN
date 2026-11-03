@@ -1,0 +1,6 @@
+[
+  {"query": "Nhau thai bám mặt trước là gì?", "expected_article_id": "0"},
+  {"query": "Nhau bám mặt trước là trai hay gái?", "expected_article_id": "1"},
+  {"query": "Ảnh hưởng tốt hay xấu khi nhau thai bám mặt trước?", "expected_article_id": "2"},
+  {"query": "Nhau bám mặt trước thì mẹ sinh thường hay sinh mổ?", "expected_article_id": "3"}
+]

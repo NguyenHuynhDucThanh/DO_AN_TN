@@ -1,0 +1,202 @@
+[
+  {
+    "query": "Nhau thai bám mặt trước là gì?",
+    "expected_article_id": "0"
+  },
+  {
+    "query": "Nhau bám mặt trước là trai hay gái?",
+    "expected_article_id": "1"
+  },
+  {
+    "query": "Ảnh hưởng tốt hay xấu khi nhau thai bám mặt trước?",
+    "expected_article_id": "2"
+  },
+  {
+    "query": "Nhau bám mặt trước thì mẹ sinh thường hay sinh mổ?",
+    "expected_article_id": "3"
+  },
+  {
+    "query": "Vị trí bám của nhau thai sẽ ảnh hưởng như thế nào đến em bé?",
+    "expected_article_id": "4"
+  },
+  {
+    "query": "Lưu ý dành cho mẹ bầu khi nhau bám mặt trước",
+    "expected_article_id": "5"
+  },
+  {
+    "query": "Bệnh vảy nến nên ăn gì?",
+    "expected_article_id": "6"
+  },
+  {
+    "query": "Các loại gia vị chứa chất kháng viêm tự nhiên",
+    "expected_article_id": "7"
+  },
+  {
+    "query": "Chế độ ăn kiêng cho người bị bệnh vảy nến",
+    "expected_article_id": "8"
+  },
+  {
+    "query": "Thành phần dinh dưỡng của quả hồng xiêm",
+    "expected_article_id": "9"
+  },
+  {
+    "query": "Hồng xiêm có tác dụng gì với sức khỏe?",
+    "expected_article_id": "10"
+  },
+  {
+    "query": "Ăn quả hồng xiêm nên lưu ý những điều gì?",
+    "expected_article_id": "11"
+  },
+  {
+    "query": "Tìm hiểu chung bệnh não gan",
+    "expected_article_id": "12"
+  },
+  {
+    "query": "Triệu chứng bệnh não gan",
+    "expected_article_id": "13"
+  },
+  {
+    "query": "Nguyên nhân bệnh não gan",
+    "expected_article_id": "14"
+  },
+  {
+    "query": "Nguy cơ bệnh não gan",
+    "expected_article_id": "15"
+  },
+  {
+    "query": "Phương pháp chẩn đoán và điều trị bệnh não gan",
+    "expected_article_id": "16"
+  },
+  {
+    "query": "Chế độ sinh hoạt và phòng ngừa bệnh não gan",
+    "expected_article_id": "17"
+  },
+  {
+    "query": "Nhu cầu dinh dưỡng của trẻ 7 tháng",
+    "expected_article_id": "18"
+  },
+  {
+    "query": "Nguyên tắc trong xây dựng thực đơn cho trẻ 7 tháng",
+    "expected_article_id": "19"
+  },
+  {
+    "query": "Thực đơn cho trẻ 7 tháng chậm tăng cân",
+    "expected_article_id": "20"
+  },
+  {
+    "query": "Một số lưu ý khi cho trẻ 7 tháng chậm tăng cân ăn dặm",
+    "expected_article_id": "21"
+  },
+  {
+    "query": "Thành phần trong collagen",
+    "expected_article_id": "22"
+  },
+  {
+    "query": "Tác dụng của collagen đối với cơ thể",
+    "expected_article_id": "23"
+  },
+  {
+    "query": "Những bệnh không nên uống collagen",
+    "expected_article_id": "24"
+  },
+  {
+    "query": "Những sai lầm cần tránh khi uống collagen",
+    "expected_article_id": "25"
+  },
+  {
+    "query": "Bị u xơ có được uống collagen không?",
+    "expected_article_id": "26"
+  },
+  {
+    "query": "Bệnh cường giáp có được uống collagen không?",
+    "expected_article_id": "27"
+  },
+  {
+    "query": "Bị bướu cổ uống collagen được không?",
+    "expected_article_id": "28"
+  },
+  {
+    "query": "Đột quỵ và đột tử do tim khác nhau ra sao?",
+    "expected_article_id": "29"
+  },
+  {
+    "query": "Xử trí khi nghi ngờ đột quỵ",
+    "expected_article_id": "30"
+  },
+  {
+    "query": "Xử trí khi nghi ngờ đột tử do tim",
+    "expected_article_id": "31"
+  },
+  {
+    "query": "Những ai có nguy cơ gục ngã bất ngờ vì đột quỵ, đột tử?",
+    "expected_article_id": "32"
+  },
+  {
+    "query": "7 nguyên tắc vàng giữ tim và não khỏe mạnh",
+    "expected_article_id": "33"
+  },
+  {
+    "query": "Dấu hiệu bị giun sán ở người lớn",
+    "expected_article_id": "34"
+  },
+  {
+    "query": "Cách kiểm tra và chẩn đoán giun sán ở người lớn",
+    "expected_article_id": "35"
+  },
+  {
+    "query": "Làm gì khi người lớn bị nhiễm giun sán?",
+    "expected_article_id": "36"
+  },
+  {
+    "query": "Người lớn sốt 39 độ có tắm được không?",
+    "expected_article_id": "37"
+  },
+  {
+    "query": "Sốt 39 độ ở người lớn là cao hay thấp?",
+    "expected_article_id": "38"
+  },
+  {
+    "query": "Người lớn bị sốt từ 39 độ trở lên nên làm gì?",
+    "expected_article_id": "39"
+  },
+  {
+    "query": "Sốt cao 39 độ thì khi nào nên đến gặp bác sĩ?",
+    "expected_article_id": "40"
+  },
+  {
+    "query": "Tác hại của cai sữa muộn: Hiểu đúng để nuôi con khỏe mạnh",
+    "expected_article_id": "41"
+  },
+  {
+    "query": "Tác hại của cai sữa muộn: Hiểu đúng để nuôi con khỏe mạnh",
+    "expected_article_id": "42"
+  },
+  {
+    "query": "Khi nào nên cai sữa cho trẻ?",
+    "expected_article_id": "43"
+  },
+  {
+    "query": "Phương pháp cai sữa cho trẻ hiệu quả",
+    "expected_article_id": "44"
+  },
+  {
+    "query": "Lưu ý quan trọng khi cai sữa cho trẻ",
+    "expected_article_id": "45"
+  },
+  {
+    "query": "10 loại rau ăn lẩu Thái tốt cho sức khỏe",
+    "expected_article_id": "46"
+  },
+  {
+    "query": "Nguyên tắc chọn rau ăn lẩu Thái tốt cho sức khỏe",
+    "expected_article_id": "47"
+  },
+  {
+    "query": "Lưu ý khi ăn rau kèm lẩu Thái",
+    "expected_article_id": "48"
+  },
+  {
+    "query": "Thông tin tổng quan về vắc xin phế cầu 13 và phế cầu 15",
+    "expected_article_id": "49"
+  }
+]
