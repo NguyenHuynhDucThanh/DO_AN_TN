@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     tool_confirmation_minutes: int = 5
     embedding_model: str = "BAAI/bge-m3"
     embedding_batch_size: int = 8
+    embedding_warmup_enabled: bool = False
     rag_top_k: int = 5
     rag_max_cosine_distance: float = 0.65
     rag_strategy: Literal["exact_dense", "hnsw_dense", "hybrid_rrf", "hybrid_rerank"] = "hnsw_dense"
@@ -59,6 +60,8 @@ class Settings(BaseSettings):
     rag_chunk_max_chars: int = 1200
     rag_chunk_overlap_chars: int = 150
     rag_max_file_bytes: int = 2_000_000_000
+    document_upload_root: str = "data/rag/raw/uploads"
+    document_upload_max_bytes: int = 25_000_000
     stt_model: str = "small"
     stt_device: Literal["cpu", "cuda", "auto"] = "cpu"
     stt_compute_type: str = "int8"
@@ -254,6 +257,25 @@ class Settings(BaseSettings):
     def validate_rag_max_file_bytes(cls, value: int) -> int:
         if not 1_000_000 <= value <= 5_000_000_000:
             raise ValueError("RAG_MAX_FILE_BYTES must be between 1 MB and 5 GB")
+        return value
+
+    @field_validator("document_upload_root")
+    @classmethod
+    def validate_document_upload_root(cls, value: str) -> str:
+        normalized = value.strip().replace("\\", "/").strip("/")
+        if not normalized or Path(normalized).is_absolute():
+            raise ValueError("DOCUMENT_UPLOAD_ROOT must be a relative path")
+        resolved = (BACKEND_ROOT / normalized).resolve()
+        allowed_root = (BACKEND_ROOT / "data" / "rag" / "raw").resolve()
+        if not resolved.is_relative_to(allowed_root):
+            raise ValueError("DOCUMENT_UPLOAD_ROOT must stay inside data/rag/raw")
+        return normalized
+
+    @field_validator("document_upload_max_bytes")
+    @classmethod
+    def validate_document_upload_max_bytes(cls, value: int) -> int:
+        if not 1_000_000 <= value <= 500_000_000:
+            raise ValueError("DOCUMENT_UPLOAD_MAX_BYTES must be between 1 MB and 500 MB")
         return value
 
     @field_validator("stt_model")

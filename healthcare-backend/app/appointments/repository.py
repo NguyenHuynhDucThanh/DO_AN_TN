@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models.care import Appointment, DoctorSchedule, ScheduleSlot
+from app.models.care import Appointment, Doctor, DoctorSchedule, ScheduleSlot
 from app.models.enums import AppointmentStatus
 
 
@@ -16,9 +16,15 @@ class AppointmentRepository:
     @staticmethod
     def _load_statement():
         return select(Appointment).options(
+            selectinload(Appointment.patient),
             selectinload(Appointment.schedule_slot)
             .selectinload(ScheduleSlot.schedule)
             .selectinload(DoctorSchedule.doctor)
+            .selectinload(Doctor.user),
+            selectinload(Appointment.schedule_slot)
+            .selectinload(ScheduleSlot.schedule)
+            .selectinload(DoctorSchedule.doctor)
+            .selectinload(Doctor.specialty),
         )
 
     def get(self, appointment_id: UUID, *, for_update: bool = False) -> Appointment | None:

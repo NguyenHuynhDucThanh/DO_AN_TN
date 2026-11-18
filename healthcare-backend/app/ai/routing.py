@@ -23,6 +23,12 @@ class ChatIntentRouter:
     BOOKING_MARKERS = (
         "dat lich",
         "dat kham",
+        "muon kham",
+        "muon di kham",
+        "can kham",
+        "kham vao",
+        "kham sang",
+        "kham chieu",
         "chon slot",
         "xac nhan lich",
         "hen kham",

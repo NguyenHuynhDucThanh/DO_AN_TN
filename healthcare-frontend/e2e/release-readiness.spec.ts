@@ -9,12 +9,12 @@ test('public business discovery and Backend health work end to end', async ({ pa
   await expect(page.getByRole('heading', { name: 'Chăm sóc sức khỏe bắt đầu từ thông tin rõ ràng.' })).toBeVisible()
 
   await page.goto('/specialties')
-  await expect(page.getByRole('heading', { name: 'Chuyên khoa' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Chuyên khoa', exact: true })).toBeVisible()
   await expect(page.getByText('Tai Mũi Họng').first()).toBeVisible()
 
   await page.goto('/doctors')
   await expect(page.getByRole('heading', { name: 'Bác sĩ' })).toBeVisible()
-  await expect(page.getByText('BS. Nguyễn Minh An (Demo)').first()).toBeVisible()
+  await expect(page.getByText('BS. Nguyễn Minh An', { exact: true }).first()).toBeVisible()
 })
 
 test('protected route redirects to login without exposing tokens', async ({ page }) => {

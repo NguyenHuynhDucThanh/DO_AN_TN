@@ -15,13 +15,43 @@ from app.auth.context import ActorContext
 from app.core.config import Settings
 from app.core.errors import BadRequestError, UnauthorizedError
 from app.handoffs.realtime import HandoffConnectionManager, handoff_event_payload
-from app.models.enums import HandoffPriority, HandoffStatus
+from app.models.enums import HandoffPriority, HandoffStatus, UserStatus
 from app.voice.schemas import TranscriptionResponse
 from app.voice.service import TranscriptionService
 
 
 def actor(*roles: str) -> ActorContext:
     return ActorContext(uuid4(), frozenset(roles))
+
+
+def test_websocket_accepts_explicit_dev_identity_only_in_dev_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.auth.dependencies as dependencies
+
+    user_id = uuid4()
+    websocket = SimpleNamespace(
+        headers={"origin": "http://localhost:5173"},
+        cookies={},
+        query_params={"dev_user_id": str(user_id)},
+    )
+    repository = MagicMock()
+    repository.get.return_value = SimpleNamespace(id=user_id, status=UserStatus.ACTIVE)
+    repository.active_role_codes.return_value = frozenset({"STAFF"})
+    monkeypatch.setattr(
+        dependencies,
+        "get_settings",
+        lambda: settings(
+            app_env="development",
+            dev_auth_enabled=True,
+            frontend_origin="http://localhost:5173",
+        ),
+    )
+    monkeypatch.setattr(dependencies, "UserRepository", lambda _db: repository)
+
+    resolved = dependencies.get_websocket_actor(websocket, MagicMock())
+
+    assert resolved == ActorContext(user_id, frozenset({"STAFF"}))
 
 
 def settings(**overrides) -> Settings:

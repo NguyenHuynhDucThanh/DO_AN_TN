@@ -1,17 +1,18 @@
 # Post-Phase 14 Issue Register
 
-Ngày cập nhật: 03/11/2026.
+Ngày cập nhật: 06/11/2026.
 
 Đề tài: **Xây dựng hệ thống y tế tích hợp chatbot hỗ trợ tư vấn, tra cứu và đặt lịch hẹn.**
 
-Tài liệu này ghi nhận các vấn đề phát hiện khi kiểm thử thủ công sau Phase 14. Các mục dưới đây chưa được coi là DONE cho tới khi implementation và regression bắt buộc PASS.
+Tài liệu này ghi nhận các vấn đề phát hiện khi kiểm thử thủ công sau Phase 14 và kết quả xử lý đã được kiểm chứng.
 
 ## Tổng hợp
 
 | ID | Vấn đề | Phân loại | Mức ảnh hưởng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| POST14-UX-01 | Admin phải nhập trực tiếp User UUID khi tạo Doctor profile | Frontend/API integration gap | Medium | PLANNED — NOT IMPLEMENTED |
-| POST14-UX-02 | Doctor không thể tạo/sửa lịch hoặc sinh slot trên Frontend; Patient không thấy lịch trống | Frontend/business workflow integration gap | High đối với demo Business MVP | RECORDED — NOT IMPLEMENTED |
+| POST14-UX-01 | Admin phải nhập trực tiếp User UUID khi tạo Doctor profile | Frontend/API integration gap | Medium | DONE — 06/11/2026 |
+| POST14-UX-02 | Doctor không thể tạo/sửa lịch hoặc sinh slot trên Frontend; Patient không thấy lịch trống | Frontend/business workflow integration gap | High đối với demo Business MVP | DONE — 06/11/2026 |
+| POST14-ENH-01 | Admin tạo đồng thời tài khoản User DOCTOR và Doctor profile | Workflow extension được người dùng chốt | Medium | DONE — 06/11/2026 |
 
 ## POST14-UX-01 — Doctor profile yêu cầu nhập User UUID
 
@@ -23,14 +24,15 @@ Tài liệu này ghi nhận các vấn đề phát hiện khi kiểm thử thủ
 - Không có API/UI liệt kê User ACTIVE có role DOCTOR nhưng chưa có Doctor profile.
 - Bác sĩ demo `doctor.an@example.invalid` đã có Doctor profile; dùng lại UUID sẽ gây conflict.
 
-### Hướng xử lý đã chốt
+### Kết quả xử lý
 
 - Thêm endpoint Admin-only liệt kê Doctor candidates.
 - Candidate phải ACTIVE, có role DOCTOR và chưa có Doctor profile.
 - Thay ô UUID bằng dropdown tên + email.
 - Giữ `DoctorService.create()` làm nguồn kiểm tra cuối cùng.
 - Không tạo module/service/model/migration mới.
-- Việc Admin tạo hoàn toàn một tài khoản Doctor mới không thuộc fix này và cần Change Request riêng.
+- Theo quyết định bổ sung của người dùng, cùng Dialog còn hỗ trợ tạo User `ACTIVE`, gán role `DOCTOR` và Doctor profile trong một transaction qua endpoint provisioning.
+- Mật khẩu khởi tạo dùng Argon2; audit không chứa mật khẩu; duplicate/error rollback toàn bộ transaction.
 
 Kế hoạch chi tiết: `doctor-user-selection-fix-plan.md`.
 
@@ -56,29 +58,26 @@ Backend đã có:
 - overlap validation và advisory transaction lock;
 - Doctor ownership và Staff/Admin authorization.
 
-Frontend hiện chỉ có:
+Frontend trước khi sửa chỉ có:
 
 - list schedule;
 - list available slots;
 - màn hình read-only.
 
-Frontend chưa có create/update/cancel/generate/block/unblock mutation hoặc form tương ứng. Vì vậy đây không phải lỗi của ScheduleService mà là workflow Backend–Frontend chưa được nối đầy đủ.
+Khoảng trống này đã được xử lý bằng cách mở rộng đúng feature Schedule hiện có; không viết lại ScheduleService.
 
-### Hướng xử lý đề xuất
+### Kết quả xử lý
 
-1. Mở rộng `features/schedules/api.ts` với create/update/generate/status mutations.
-2. Thêm create schedule dialog cho Doctor:
+1. Đã mở rộng `features/schedules/api.ts` với create/update/generate/status mutations.
+2. Đã thêm create schedule dialog cho Doctor:
    - ngày/giờ bắt đầu;
    - ngày/giờ kết thúc;
    - thời lượng slot;
    - timezone rõ ràng.
-3. Sau khi tạo schedule, cho phép sinh slot. Nếu sinh slot lỗi, schedule vẫn hiển thị và có nút thử lại.
-4. Cho phép sửa interval khi chưa có slot; Backend tiếp tục từ chối sửa interval khi đã sinh slot.
-5. Cho phép hủy schedule theo state/rule hiện có.
-6. Bổ sung API đọc toàn bộ slot của một schedule nếu cần quản lý cả AVAILABLE/BOOKED/BLOCKED sau reload.
-7. Thêm UI block/unblock; slot BOOKED không được thay đổi.
-8. Invalidate đúng schedule và available-slot queries sau mutation.
-9. Có thể cải thiện seed để tạo một số slot AVAILABLE phục vụ demo, nhưng không dùng seed để thay thế chức năng quản lý lịch.
+3. Có thể sinh slot, retry khi lỗi, sửa interval khi chưa có slot và hủy theo Backend rule.
+4. Đã bổ sung API bảo vệ đọc toàn bộ slot của một schedule.
+5. UI cho block/unblock; slot BOOKED không có thao tác thay đổi.
+6. Mutation invalidate đúng schedule/slot/available-slot queries.
 
 ### Test bắt buộc
 
@@ -117,11 +116,19 @@ Regression cuối:
 - Không sửa migration đã apply.
 - Không cần migration nếu chỉ thêm endpoint đọc slot và Frontend mutations.
 
+## Kết quả kiểm chứng
+
+- Backend focused workflow tests: **12/12 PASS**.
+- Backend full PostgreSQL regression: **162/162 PASS**.
+- Frontend workflow tests mới: **4/4 PASS**.
+- Frontend full regression: **41/41 PASS**; ESLint 0 warning; production build PASS.
+- Không thay đổi schema và không tạo migration.
+
 ## Quy tắc xử lý hai issue
 
 - Không gộp hai vấn đề thành một refactor Auth/Schedule lớn.
 - Thực hiện từng issue và regression độc lập.
 - Chỉ đánh DONE khi code, API/UI và test thật đã PASS.
-- Nếu phát sinh yêu cầu Admin tạo tài khoản Doctor mới hoặc thay đổi nghiệp vụ lịch, phải đánh giá Change Request trước.
+- Yêu cầu Admin tạo tài khoản Doctor mới đã được người dùng quyết định bổ sung và triển khai bằng schema hiện có.
 - Sau khi fix, cập nhật Phase 14, requirement traceability, final test matrix và demo script bằng kết quả thật.
 

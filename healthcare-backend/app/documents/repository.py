@@ -23,6 +23,20 @@ class DocumentRepository:
     def get_for_update(self, document_id: UUID) -> Document | None:
         return self.session.scalar(select(Document).where(Document.id == document_id).with_for_update())
 
+    def get_by_checksum(self, checksum_sha256: str) -> Document | None:
+        return self.session.scalar(
+            select(Document).where(Document.checksum_sha256 == checksum_sha256)
+        )
+
+    def list_by_uploader(self, uploaded_by: UUID) -> list[Document]:
+        return list(
+            self.session.scalars(
+                select(Document)
+                .where(Document.uploaded_by == uploaded_by)
+                .order_by(Document.created_at.desc())
+            )
+        )
+
     def add(self, document: Document) -> Document:
         self.session.add(document)
         return document

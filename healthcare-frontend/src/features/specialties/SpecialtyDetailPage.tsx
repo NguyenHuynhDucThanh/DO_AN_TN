@@ -12,7 +12,7 @@ export function SpecialtyDetailPage() {
   if (query.isError) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />
   return (
     <>
-      <PageHeader eyebrow={query.data.code} title={query.data.name} description="Thông tin chuyên khoa từ Backend Phase 3." />
+      <PageHeader eyebrow="Thông tin chuyên khoa" title={query.data.name} description="Xem thông tin chuyên khoa và đội ngũ bác sĩ đang hoạt động." />
       <Card>
         <CardContent sx={{ p: { xs: 3, md: 5 } }}>
           <Stack spacing={3}>

@@ -11,7 +11,10 @@ def test_postgresql_pgvector_and_migration(real_database: Engine) -> None:
         assert connection.execute(text("SELECT extname FROM pg_extension WHERE extname='vector'")).scalar_one() == "vector"
         # Literal smoke test is independent of the BGE-M3 column dimension.
         assert connection.execute(text("SELECT CAST('[1,0,0]' AS vector) <=> CAST('[1,0,0]' AS vector)")).scalar_one() == pytest.approx(0)
-        assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0004_add_json_document_type"
+        assert (
+            connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
+            == "0005_document_contribution"
+        )
         expected_tables = {
             "alembic_version", "appointments", "audit_logs", "doctor_schedules", "doctors",
             "document_chunks", "documents", "handoff_requests", "medical_records", "refresh_sessions",

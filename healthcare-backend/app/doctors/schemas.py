@@ -5,9 +5,17 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.auth.schemas import RegisterRequest
+
 
 class DoctorCreate(BaseModel):
     user_id: UUID
+    specialty_id: UUID
+    license_number: str = Field(min_length=2, max_length=50)
+    biography: str | None = Field(default=None, max_length=5000)
+
+
+class DoctorProvisionCreate(RegisterRequest):
     specialty_id: UUID
     license_number: str = Field(min_length=2, max_length=50)
     biography: str | None = Field(default=None, max_length=5000)
@@ -26,6 +34,10 @@ class DoctorUserRead(BaseModel):
     full_name: str
     email: str
     phone: str | None
+
+
+class DoctorCandidateRead(DoctorUserRead):
+    pass
 
 
 class DoctorSpecialtyRead(BaseModel):

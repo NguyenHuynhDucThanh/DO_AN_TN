@@ -8,9 +8,11 @@ Target duration: 15–20 minutes. Use synthetic data only. Do not type or reveal
 2. Run `alembic upgrade head` and `seed_demo.py`.
 3. Set Patient/Doctor/Staff/Admin demo passwords through `set_demo_password.py` hidden prompts. Never store them in this file.
 4. Start Backend on `127.0.0.1:8000`, Frontend on `localhost:5173`.
-5. Verify health, login, one available slot, Gemini quota/key, an APPROVED+COMPLETED RAG document, Handoff and browser microphone permission.
+5. Verify health, login, Gemini quota/key, an APPROVED+COMPLETED RAG document, Handoff and browser microphone permission.
 6. Keep separate browser profiles/incognito windows for Patient, Doctor and Staff/Admin, or log out between roles.
 7. Keep the direct Business MVP path ready even if AI/external services fail.
+
+Nếu cần chuẩn bị dữ liệu hoàn toàn bằng UI: Admin mở **Quản lý bác sĩ → Thêm bác sĩ** để tạo đồng thời tài khoản/profile (hoặc chọn tài khoản Doctor có sẵn); Doctor đăng nhập, tạo lịch tương lai và bấm **Sinh slot**. Sau đó Patient sẽ thấy các slot `AVAILABLE`, không cần nhập UUID hoặc sửa database thủ công.
 
 ## Main flow
 

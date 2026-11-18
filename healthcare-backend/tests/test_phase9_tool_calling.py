@@ -121,6 +121,45 @@ async def test_gemini_structured_tool_request_is_parsed_with_manual_execution() 
     turn = await client.request_tool_turn("Tìm chuyên khoa tim mạch", [], None, MagicMock())
     assert turn.calls == [GeminiFunctionCall("search_specialty", {"query": "tim mạch"}, "call-1")]
     assert fake.calls[0]["config"].automatic_function_calling.disable is True
+    assert "Thời gian hệ thống hiện tại" in fake.calls[0]["config"].system_instruction
+
+
+@pytest.mark.anyio
+async def test_gemini_continuation_keeps_tools_enabled_for_multi_step_lookup() -> None:
+    first_call = GeminiFunctionCall("search_specialty", {"query": "Nội tổng quát"}, "call-1")
+    next_function_call = types.FunctionCall(
+        name="list_doctors", args={"specialty_id": str(uuid4())}, id="call-2"
+    )
+    next_content = types.Content(
+        role="model", parts=[types.Part(function_call=next_function_call)]
+    )
+    fake = FakeGeminiAsyncClient(SimpleNamespace(
+        candidates=[SimpleNamespace(content=next_content)],
+        function_calls=[next_function_call],
+        text=None,
+    ))
+    client = GeminiClient(settings(), client_factory=lambda **_kwargs: FakeGeminiSdkClient(fake))
+    turn = GeminiToolTurn(
+        text=None,
+        calls=[first_call],
+        contents=[types.Content(role="user", parts=[types.Part(text="Tôi đau bụng")])],
+        model_content=types.Content(
+            role="model",
+            parts=[types.Part(function_call=types.FunctionCall(
+                name=first_call.name, args=first_call.arguments, id=first_call.call_id
+            ))],
+        ),
+    )
+
+    next_turn = await client.continue_tool_turn(
+        turn,
+        [{"name": "search_specialty", "status": "SUCCESS", "data": {"count": 1}}],
+        MagicMock(),
+    )
+
+    assert next_turn.calls[0].name == "list_doctors"
+    assert fake.calls[0]["config"].tools
+    assert fake.calls[0]["config"].automatic_function_calling.disable is True
 
 
 @pytest.mark.anyio
@@ -143,6 +182,34 @@ async def test_specialty_search_reuses_service_and_no_results_are_explicit() -> 
     result = await tools.execute("search_specialty", {"query": "không có"}, actor("PATIENT"))
     tools.specialties.search.assert_called_once_with("không có")
     assert result.data == {"items": [], "count": 0}
+
+
+@pytest.mark.anyio
+async def test_available_slots_can_search_whole_specialty_in_morning_period() -> None:
+    tools = executor()
+    specialty_id = uuid4()
+    tools.schedules.available_slots.return_value = []
+
+    result = await tools.execute(
+        "available_slots",
+        {
+            "specialty_id": str(specialty_id),
+            "date": "2035-01-02",
+            "period": "MORNING",
+        },
+        actor("PATIENT"),
+    )
+
+    start_at, end_at = tools.schedules.available_slots.call_args.args[:2]
+    assert start_at == datetime(2035, 1, 1, 17, 0, tzinfo=timezone.utc)
+    assert end_at == datetime(2035, 1, 2, 5, 0, tzinfo=timezone.utc)
+    assert tools.schedules.available_slots.call_args.kwargs == {
+        "doctor_id": None,
+        "specialty_id": specialty_id,
+    }
+    assert result.data["date"] == "2035-01-02"
+    assert result.data["period"] == "MORNING"
+    assert result.data["count"] == 0
 
 
 @pytest.mark.anyio

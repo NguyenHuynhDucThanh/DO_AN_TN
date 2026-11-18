@@ -40,7 +40,15 @@ RAG V1 quản trị Document metadata/review; chỉ Admin APPROVE/REJECT và ch�
 
 Exact retrieval được chọn làm V1 baseline vì dễ kiểm chứng và không phụ thuộc approximate index tuning. Dataset/benchmark chi tiết nằm trong `final-rag-dataset-performance.md`.
 
-## 7. Tool Calling và AI booking (Phase 9)
+## 7. Doctor Knowledge Contribution (ENH-KB-001)
+
+SRS v1.2 bổ sung workflow thực tế để Doctor đóng góp tài liệu mà không phải copy file thủ công hoặc deploy lại hệ thống. Doctor upload PDF, DOCX, CSV, JSON hoặc JSONL tương thích JSON kèm provenance; Backend lấy owner từ ActorContext, tạo storage key an toàn, xác minh MIME/content, giới hạn mặc định 25 MB và tính SHA-256. Doctor chỉ quản lý contribution của mình.
+
+Admin kiểm tra/download file qua API an toàn, APPROVE hoặc REJECT kèm lý do, rồi chủ động ingest qua DocumentIngestionService hiện có. Review và ingestion là hai lifecycle độc lập; chỉ tài liệu `APPROVED + COMPLETED` mới được RAG retrieval. Duplicate SHA-256 bị từ chối. MedicalRecord không bao giờ được chuyển thành Document/DocumentChunk/embedding/RAG/Gemini.
+
+Golden Path đã xác minh reject → resubmit → approve → chưa retrievable trước ingest → BGE-M3 ingest → chunks PostgreSQL/pgvector → retriever trả đúng source. File replacement/versioning, OCR/image, XLSX/PPTX/TXT và antivirus scanning nằm ngoài phạm vi hiện tại; nội dung trusted thay đổi phải tạo contribution mới. Runtime local storage cần persistent disk khi deploy, ingestion hiện chạy synchronous và optional HF_TOKEN warning có thể xuất hiện khi tải model.
+
+## 8. Tool Calling và AI booking (Phase 9)
 
 ```text
 Gemini → Tool Layer → ActorContext/Auth → existing Business Service → PostgreSQL
@@ -50,13 +58,13 @@ LLM chỉ đề xuất tool/structured arguments. Backend validate input, identi
 
 Booking qua chatbot luôn có explicit confirmation: model hiểu intent → tool tìm slot → Backend tạo summary + token ngắn hạn → UI hiển thị → user bấm Confirm → AppointmentService mới thực thi transaction. Risk/orchestrator không bypass quy tắc này.
 
-## 8. AI MVP và Risk Alert (Phase 10)
+## 9. AI MVP và Risk Alert (Phase 10)
 
 Chat Orchestrator phân biệt risk/safety, knowledge query, business lookup, booking intent, handoff và fallback. Knowledge dùng RAG; dữ liệu động dùng Tools; provider/retrieval/tool failure không được bù bằng nội dung bịa.
 
 Risk Alert là deterministic rule engine chạy trước Gemini. Khi trigger, hệ thống hiển thị cảnh báo an toàn không chẩn đoán và có thể tạo Handoff ưu tiên qua service hiện có. Đây là safety escalation, không phải diagnostic engine hoặc prescription system.
 
-## 9. Voice, TTS và Handoff WebSocket (Phase 11)
+## 10. Voice, TTS và Handoff WebSocket (Phase 11)
 
 Voice dùng microphone vật lý có sẵn qua browser `getUserMedia`/`MediaRecorder`, upload audio tới FastAPI, nhận dạng bằng faster-whisper, cleanup file tạm và đặt transcript có thể chỉnh sửa vào cùng chat text pipeline. Không có custom/virtual microphone hoặc Voice chatbot riêng.
 
@@ -64,22 +72,22 @@ TTS dùng `SpeechSynthesis`/`SpeechSynthesisUtterance` của browser; text luôn
 
 Handoff REST/PostgreSQL giữ persistent state `PENDING → IN_PROGRESS → RESOLVED`; WebSocket chỉ notification/status. Khi WebSocket lỗi, UI reload state qua REST/DB. MVP không có live Patient-Staff chat.
 
-## 10. RAG V2/V3 experiments (Phase 12)
+## 11. RAG V2/V3 experiments (Phase 12)
 
 Phase 12 so sánh Exact Dense, HNSW Dense, BM25+RRF và BGE reranker trên cùng corpus 209 chunks, 50 grounded query, Top-K=5. HNSW giữ cùng Hit@5/Recall@5/MRR với exact nhưng mean thấp hơn; V2 không cải thiện quality; V3 chỉ cải thiện nhỏ nhưng CPU latency nhiều giây. Runtime cuối là `hnsw_dense`, exact là baseline/fallback, V2/V3 giữ làm experiment/report.
 
-## 11. Frontend
+## 12. Frontend
 
 Frontend dùng React, TypeScript, Vite, Material UI, TanStack Query, Axios, React Hook Form, Zod và React Router. Backend vẫn authoritative cho authorization/business rules. TanStack Query quản lý server state/invalidation; forms dùng Zod cho UX validation. Phase 13 dùng `React.lazy`/dynamic import theo route, giảm largest JS chunk từ 878.33 kB xuống 398.03 kB và loại warning >500 kB.
 
-## 12. Safety wording example
+## 13. Safety wording example
 
 Với “nay mệt và sổ mũi”, hệ thống tạo BGE-M3 query embedding, lấy approved medical context rồi Gemini tạo câu trả lời có nguồn. Chatbot không nên kết luận “Bạn bị cúm”, mà nói “Những triệu chứng này có thể gặp trong…” và hướng dẫn tìm hỗ trợ y tế phù hợp nếu nặng/kéo dài. Retrieval assistance không tương đương chẩn đoán.
 
-## 13. Scope statements for the thesis
+## 14. Scope statements for the thesis
 
 - READY cho đồ án/demo có kiểm soát; không claim production-scale healthcare certification.
 - Full 1 GB dataset chưa được ingest; báo cáo dùng large controlled subset.
-- Playwright 3/3 là scoped release smoke, không phải full multi-role/provider/microphone browser automation.
+- Evidence Phase 14 Playwright 3/3 được giữ là lịch sử; current final suite sau ENH-KB-001 là 5/5 scoped workflows/release, không phải live Gemini/full corpus/microphone browser automation.
 - Auth/booking/Gemini/Tool/STT latency là NOT MEASURED vì chưa có methodology/sample cố định.
 - MedicalRecord là hồ sơ kết quả khám cơ bản, không phải full HIS/EMR.

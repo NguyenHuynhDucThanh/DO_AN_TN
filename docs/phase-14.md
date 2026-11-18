@@ -74,8 +74,8 @@ SRS v1.1 and the submitted proposal were not modified.
 
 | Gate | Final result |
 | --- | --- |
-| Backend full suite + real PostgreSQL integration | **160/160 PASS** in 21.09s |
-| Frontend Vitest/RTL | **37/37 PASS** |
+| Backend full suite + real PostgreSQL integration | **162/162 PASS** (post-checkpoint regression 06/11/2026) |
+| Frontend Vitest/RTL | **41/41 PASS** (8 files, post-checkpoint regression) |
 | Frontend ESLint | **PASS**, 0 warning |
 | Frontend production build | **PASS**, largest JS 398.03 kB / gzip 124.41 kB |
 | Playwright Edge scoped release smoke | **3/3 PASS** in 12.9s |
@@ -121,10 +121,12 @@ Playwright remains scoped; it does not claim full multi-role/Gemini/WebSocket/ph
 
 The project is not claimed as certified production healthcare software or a diagnosis system. After this checkpoint, do not add features; only mandatory bug fixes are allowed and must be followed by relevant regression.
 
-## 11. Post-checkpoint issue recorded on 03/11/2026
+## 11. Post-checkpoint workflow fixes hoàn thành ngày 06/11/2026
 
-Admin Doctor create UI currently asks for a raw `User UUID` while no candidate-selection API/UI exists. Backend invariants remain correct, but the workflow is not suitable for normal Admin use. The approved minimal resolution is documented in `doctor-user-selection-fix-plan.md`: add an Admin-only list of ACTIVE users with role DOCTOR and no Doctor profile, then replace the raw UUID field with a dropdown. This is recorded as **PLANNED — NOT IMPLEMENTED** and must not be reported DONE until implementation and regression pass. Creating a brand-new Doctor account from the Admin UI remains outside this fix and requires a separate Change Request.
+- **ISSUE-001 DONE:** Admin không còn nhập raw `User UUID`; có thể chọn tài khoản Doctor hợp lệ từ dropdown.
+- **ENH-001 DONE:** cùng Dialog cho phép Admin tạo đồng thời User role `DOCTOR` và Doctor profile trong một transaction; mật khẩu khởi tạo được băm Argon2 và không xuất hiện trong audit.
+- **ISSUE-002 DONE:** Doctor Schedule UI hỗ trợ tạo/sửa/hủy lịch, sinh slot và block/unblock; Patient có thể thấy slot `AVAILABLE` được tạo từ workflow thật.
+- Backend reuse Doctor/Schedule services, ownership, advisory overlap lock và validation hiện có. Chỉ bổ sung endpoint/read method và orchestration cần thiết; không tạo service/model/table trùng.
+- Không thay đổi schema và không tạo migration mới.
 
-Manual testing also found that Doctor Schedule UI is read-only although Backend mutation endpoints already exist. Both seeded schedules currently have zero AVAILABLE slots, so Patient discovery returns no bookable time. This issue and the Doctor UUID issue are centrally tracked in `known-issues-tracker.md`. The Schedule issue is **OPEN — NOT IMPLEMENTED** and must reuse existing ScheduleService/overlap/concurrency rules.
-
-A second manual-test issue was recorded: the Doctor Schedule page is read-only even though Backend create/update/generate/block APIs already exist. The seeded schedules currently contain zero AVAILABLE slots, so Patient discovery correctly returns no free appointment time. Both issues, their evidence, proposed resolution and required tests are consolidated in `post-phase14-issue-register.md`. The schedule UI issue is **RECORDED — NOT IMPLEMENTED** and has High impact on the end-to-end Business MVP demo. No code/schema/migration was changed when recording these issues.
+Post-checkpoint evidence: Backend **162/162 PASS**; Frontend **41/41 PASS**; lint 0 warning; production build PASS. Chi tiết nằm trong `known-issues-tracker.md` và `doctor-user-selection-fix-plan.md`.

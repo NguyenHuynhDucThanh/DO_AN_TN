@@ -12,9 +12,10 @@ from app.appointments.schemas import AppointmentCancel, AppointmentCreate
 from app.appointments.service import AppointmentService
 from app.auth.context import ActorContext
 from app.auth.dependencies import get_current_actor
+from app.auth.passwords import verify_password
 from app.core.database import get_db
 from app.core.errors import BadRequestError, ConflictError, ForbiddenError
-from app.doctors.schemas import DoctorCreate, DoctorUpdate
+from app.doctors.schemas import DoctorCreate, DoctorProvisionCreate, DoctorUpdate
 from app.doctors.service import DoctorService
 from app.documents.schemas import DocumentCreate, DocumentReview
 from app.documents.service import DocumentService
@@ -35,7 +36,7 @@ from app.models.enums import (
 from app.models.identity import Role, User, UserRole
 from app.models.medical_record import MedicalRecord
 from app.models.operations import AuditLog
-from app.schedules.schemas import ScheduleCreate, SlotStatusUpdate
+from app.schedules.schemas import ScheduleCreate, ScheduleUpdate, SlotStatusUpdate
 from app.schedules.service import ScheduleService
 from app.specialties.schemas import SpecialtyCreate, SpecialtyStatusUpdate, SpecialtyUpdate
 from app.specialties.service import SpecialtyService
@@ -151,6 +152,82 @@ def test_specialty_and_doctor_crud_with_rollback(
     ).biography == "Updated biography"
 
 
+def test_admin_lists_candidates_and_provisions_doctor_account_atomically(
+    phase3_session: Session, actors: dict[str, ActorContext]
+) -> None:
+    service = DoctorService(phase3_session)
+    specialty = seeded_doctor(phase3_session).specialty
+    candidate = create_user_with_role(phase3_session, "DOCTOR", "candidate")
+    inactive = create_user_with_role(phase3_session, "DOCTOR", "inactive-doctor")
+    inactive.status = UserStatus.INACTIVE
+    patient = create_user_with_role(phase3_session, "PATIENT", "not-doctor")
+    phase3_session.commit()
+
+    candidate_ids = {user.id for user in service.list_candidates(actors["admin"])}
+    assert candidate.id in candidate_ids
+    assert inactive.id not in candidate_ids
+    assert patient.id not in candidate_ids
+    with pytest.raises(ForbiddenError):
+        service.list_candidates(actors["patient"])
+
+    created_from_candidate = service.create(
+        DoctorCreate(
+            user_id=candidate.id,
+            specialty_id=specialty.id,
+            license_number=f"CAND-{uuid4().hex[:8]}",
+        ),
+        actors["admin"],
+    )
+    assert created_from_candidate.user_id == candidate.id
+    assert candidate.id not in {user.id for user in service.list_candidates(actors["admin"])}
+
+    suffix = uuid4().hex[:10]
+    email = f"provisioned.{suffix}@example.invalid"
+    password = "Temporary123"
+    provisioned = service.provision(
+        DoctorProvisionCreate(
+            email=email,
+            password=password,
+            full_name="Bác sĩ Provisioned",
+            phone="0901234567",
+            specialty_id=specialty.id,
+            license_number=f"PROV-{suffix}",
+            biography="Synthetic provisioning test",
+        ),
+        actors["admin"],
+    )
+    user = phase3_session.get(User, provisioned.user_id)
+    assert user is not None and verify_password(user.password_hash, password)
+    role_codes = set(
+        phase3_session.scalars(
+            select(Role.code)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(UserRole.user_id == user.id)
+        )
+    )
+    assert role_codes == {"DOCTOR"}
+    audit = phase3_session.scalar(
+        select(AuditLog).where(
+            AuditLog.action == "DOCTOR_PROVISIONED", AuditLog.entity_id == provisioned.id
+        )
+    )
+    assert audit is not None and "password" not in audit.audit_metadata
+
+    with pytest.raises(ConflictError, match="email"):
+        service.provision(
+            DoctorProvisionCreate(
+                email=email,
+                password="Another123",
+                full_name="Duplicate Doctor",
+                phone="0901234568",
+                specialty_id=specialty.id,
+                license_number=f"OTHER-{suffix}",
+            ),
+            actors["admin"],
+        )
+    assert phase3_session.scalar(select(User).where(User.email == email)) == user
+
+
 def test_schedule_validation_slot_generation_and_blocking(
     phase3_session: Session, actors: dict[str, ActorContext]
 ) -> None:
@@ -196,6 +273,16 @@ def test_schedule_validation_slot_generation_and_blocking(
     assert blocked.status == SlotStatus.BLOCKED
     available = service.available_slots(start, start + timedelta(hours=2), doctor.id)
     assert {slot.id for slot in available} == {slot.id for slot in slots[1:]}
+    assert {slot.id for slot in service.list_slots(schedule.id, actors["doctor"])} == {
+        slot.id for slot in slots
+    }
+    assert len(service.list_slots(schedule.id, actors["admin"])) == 4
+    with pytest.raises(ForbiddenError):
+        service.list_slots(schedule.id, actors["patient"])
+
+    service.update(schedule.id, ScheduleUpdate(status=ScheduleStatus.CANCELLED), actors["doctor"])
+    with pytest.raises(ConflictError, match="cancelled schedule"):
+        service.set_slot_status(slots[0].id, SlotStatusUpdate(blocked=False), actors["doctor"])
 
 
 def test_appointment_booking_cancel_rebook_and_blocked_slot(
@@ -486,6 +573,52 @@ async def test_specialty_router_and_conflict_error_contract(
     assert missing.status_code == 404
     assert invalid.status_code == 422
     assert invalid_range.status_code == 400
+    app.dependency_overrides.clear()
+
+
+@pytest.mark.anyio
+async def test_doctor_provision_and_schedule_slots_router_contract(
+    phase3_session: Session, actors: dict[str, ActorContext]
+) -> None:
+    app = create_app()
+    app.dependency_overrides[get_db] = lambda: phase3_session
+    app.dependency_overrides[get_current_actor] = lambda: actors["admin"]
+    specialty = seeded_doctor(phase3_session).specialty
+    suffix = uuid4().hex[:10]
+    provision_payload = {
+        "email": f"api-doctor.{suffix}@example.invalid",
+        "password": "Temporary123",
+        "full_name": "API Doctor",
+        "phone": "0901234567",
+        "specialty_id": str(specialty.id),
+        "license_number": f"API-{suffix}",
+    }
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        candidates = await client.get("/api/v1/doctors/candidates")
+        provisioned = await client.post("/api/v1/doctors/provision", json=provision_payload)
+        assert provisioned.status_code == 201
+        doctor_id = provisioned.json()["id"]
+        schedule = await client.post(
+            "/api/v1/schedules",
+            json={
+                "doctor_id": doctor_id,
+                "start_at": "2035-04-10T01:00:00+00:00",
+                "end_at": "2035-04-10T03:00:00+00:00",
+                "slot_duration_minutes": 30,
+            },
+        )
+        assert schedule.status_code == 201
+        schedule_id = schedule.json()["id"]
+        generated = await client.post(f"/api/v1/schedules/{schedule_id}/slots/generate")
+        listed = await client.get(f"/api/v1/schedules/{schedule_id}/slots")
+        app.dependency_overrides[get_current_actor] = lambda: actors["patient"]
+        forbidden_candidates = await client.get("/api/v1/doctors/candidates")
+        forbidden_slots = await client.get(f"/api/v1/schedules/{schedule_id}/slots")
+    assert candidates.status_code == 200
+    assert generated.status_code == 201 and len(generated.json()) == 4
+    assert listed.status_code == 200 and len(listed.json()) == 4
+    assert forbidden_candidates.status_code == 403
+    assert forbidden_slots.status_code == 403
     app.dependency_overrides.clear()
 
 

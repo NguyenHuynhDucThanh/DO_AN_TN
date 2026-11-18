@@ -1,6 +1,8 @@
 """FastAPI application entry point."""
 
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,9 +15,36 @@ from app.core.errors import ApplicationError
 logger = logging.getLogger(__name__)
 
 
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    settings = get_settings()
+    warmup_task: asyncio.Task[object] | None = None
+    if settings.embedding_warmup_enabled and settings.app_env != "test":
+        from app.documents.embeddings import get_embedding_service
+
+        async def warmup_embedding() -> None:
+            try:
+                await asyncio.to_thread(
+                    get_embedding_service().embed,
+                    ["khởi động tra cứu thông tin sức khỏe"],
+                )
+                logger.info("Embedding model warm-up completed")
+            except Exception:
+                logger.warning(
+                    "Embedding model warm-up failed; lazy loading remains available",
+                    exc_info=True,
+                )
+
+        warmup_task = asyncio.create_task(warmup_embedding())
+        application.state.embedding_warmup_task = warmup_task
+    yield
+    if warmup_task is not None and not warmup_task.done():
+        warmup_task.cancel()
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
-    application = FastAPI(title=PROJECT_TITLE, version="0.11.0")
+    application = FastAPI(title=PROJECT_TITLE, version="0.11.0", lifespan=lifespan)
     allowed_headers = ["Content-Type", "Authorization", "X-CSRF-Token"]
     if settings.app_env != "production":
         allowed_headers.append("X-Dev-User-Id")

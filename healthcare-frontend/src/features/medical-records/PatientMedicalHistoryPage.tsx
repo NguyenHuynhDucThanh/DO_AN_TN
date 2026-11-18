@@ -10,7 +10,7 @@ export function PatientMedicalHistoryPage() {
   const query = useQuery({ queryKey: medicalRecordKeys.history, queryFn: listMedicalHistory })
   return (
     <>
-      <PageHeader eyebrow="Patient · Chỉ đọc" title="Lịch sử khám" description="Chỉ hồ sơ gắn với lịch hẹn của chính bạn được Backend trả về." />
+      <PageHeader eyebrow="Dành cho người bệnh · Chỉ đọc" title="Lịch sử khám" description="Xem kết quả từ những buổi khám đã hoàn thành của bạn." />
       {query.isPending ? <LoadingState /> : query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : query.data.length === 0 ? <EmptyState title="Chưa có hồ sơ khám" description="Hồ sơ sẽ xuất hiện sau khi bác sĩ hoàn tất lịch khám và lập kết quả." /> : (
         <Stack spacing={2}>
           {query.data.map((record) => (

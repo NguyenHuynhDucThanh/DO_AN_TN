@@ -94,6 +94,7 @@ class ScheduleRepository:
         to_at: datetime,
         doctor_id: UUID | None = None,
         specialty_id: UUID | None = None,
+        limit: int = 100,
     ) -> list[ScheduleSlot]:
         statement = (
             select(ScheduleSlot)
@@ -113,7 +114,8 @@ class ScheduleRepository:
                 ScheduleSlot.start_at >= from_at,
                 ScheduleSlot.start_at < to_at,
             )
-            .order_by(ScheduleSlot.start_at)
+            .order_by(ScheduleSlot.start_at, ScheduleSlot.id)
+            .limit(limit)
         )
         if doctor_id is not None:
             statement = statement.where(DoctorSchedule.doctor_id == doctor_id)

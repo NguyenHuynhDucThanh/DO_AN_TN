@@ -1,6 +1,6 @@
 # Truy vết yêu cầu triển khai
 
-Baseline hiện hành: SRS v1.1 Final ngày 19/10/2026. Bản v1.0 được giữ trong `docs/backups/`; đề cương đã nộp và roadmap chính thức được giữ nguyên. Tài liệu này đồng bộ trạng thái implementation và nghiệm thu đến Phase 14; final regression, documentation, report/demo/defense materials và release-readiness review đã hoàn thành. Ma trận tường minh 159 identifier SRS nằm trong `final-requirement-matrix.md`. Tài liệu không thay thế hoặc sửa ma trận yêu cầu trong SRS.
+Baseline hiện hành: SRS v1.2 Final ngày 18/11/2026, kế thừa toàn bộ SRS v1.1 và bổ sung ENH-KB-001 sau verification. Bản v1.0 và v1.1 được giữ trong `docs/backups/`; đề cương đã nộp, roadmap Phase 1–14 và evidence lịch sử được giữ nguyên. Tài liệu này phân biệt rõ evidence lịch sử với current final regression của enhancement; ma trận tường minh nằm trong `final-requirement-matrix.md`. Tài liệu không thay thế hoặc sửa ma trận yêu cầu trong SRS.
 
 Quy ước trạng thái:
 
@@ -9,12 +9,12 @@ Quy ước trạng thái:
 - **TEMPORARY**: nền tảng tạm phục vụ development/test, không phải implementation production.
 - **DEFERRED**: đúng chủ đích chưa triển khai vì thuộc phase sau.
 
-## Ma trận tổng hợp đến Phase 14
+## Ma trận tổng hợp lịch sử đến Phase 14
 
 | Requirement | Phase thực tế | Implementation | Test / kiểm chứng | Status |
 | --- | --- | --- | --- | --- |
 | NFR-COMP-01 | Phase 1 | Windows 11, Python 3.12; Backend và Frontend là hai project độc lập | Runtime, Uvicorn, Vite và script setup đã được kiểm tra | DONE |
-| NFR-MNT-01 | Phase 1, 3–13 | Backend Modular Monolith; Frontend feature-based; Phase 13 harden cross-cutting security và lazy-load feature routes, không viết lại business/AI architecture | Backend 160/160; Frontend 37/37; Playwright 3/3; duplicate/source/privacy audit | DONE implementation Phase 13 |
+| NFR-MNT-01 | Phase 1, 3–13; post-Phase 14 fixes | Backend Modular Monolith; Frontend feature-based; Phase 13 harden cross-cutting security và lazy-load feature routes; workflow fixes mở rộng module Doctor/Schedule hiện có, không tạo kiến trúc song song | Backend 162/162; Frontend 41/41; Playwright 4/4; duplicate/source/privacy audit | DONE |
 | NFR-MNT-02 | Phase 1, 2, 8 | Alembic đọc URL từ cấu hình; migration nối tiếp đến `0004_add_json_document_type`; không sửa 0001–0003 | `alembic current`, `heads`, `check`; model/migration parity | DONE; 0004 là schema change thật để hỗ trợ JSON |
 | NFR-SEC-02, NFR-SEC-03, NFR-SEC-04 | Phase 1 nền tảng; Phase 5 auth; Phase 7 AI secret; Phase 13–14 hardening | JWT/cookie/CSRF/RBAC giữ nguyên; secrets Backend-only; rate limit, sanitized 500, security headers, dependency/secret audit; production config guards; Phase 14 cập nhật `follow-redirects` | Auth/object-level integration; 429/headers/error tests; `pip-audit` sạch; npm production audit 0; no Critical/High open; secret scan | DONE; 12 Moderate chỉ ở dev ESLint/minimatch được chấp nhận |
 | FR-AUTH-01..06, RBAC | Phase 2 schema; Phase 3 nền tảng tạm; Phase 5 production implementation | Register/login/logout/refresh/current-user/profile; `ActorContext` được giữ nguyên; JWT/session dependency đọc role active từ PostgreSQL; `X-Dev-User-Id` chỉ còn tùy chọn development/test và bị vô hiệu trong production | `test_phase3_auth.py`; `test_phase5_auth_integration.py`; Frontend auth/route tests; browser login/logout bằng cookie thật | DONE Phase 5; không viết lại business services |
@@ -22,8 +22,8 @@ Quy ước trạng thái:
 | FR-CHAT-04, NFR-REL-01/02 | Phase 6 baseline; Phase 7 | Timeout/network/400/401/403/404/429/5xx/invalid response được map an toàn; Gemini không là dependency của Business MVP | Provider-error matrix; health vẫn 200 khi chat 503; Phase 1-6 regression 75/75 | DONE implementation |
 | FR-CHAT-02/03, NFR-AI-01/02 | Phase 7 baseline; Phase 10 mở rộng | System instruction không chẩn đoán/kê đơn/điều trị/giả bác sĩ; nêu giới hạn và khuyến nghị gặp nhân viên y tế | Safety instruction assertions và safe-fallback tests | DONE baseline Phase 7; Risk Alert rule-based DONE Phase 10 |
 | FR-SPE-01..03 | Phase 2 schema; Phase 3 Backend; Phase 4 Frontend | Specialty list/detail/create/update/status; public UI và Admin management | Backend CRUD/conflict/rollback; RTL Specialty list/loading/empty/error | DONE Backend + Frontend |
-| FR-DOC-01..03 | Phase 2 schema; Phase 3 Backend; Phase 4 Frontend | Doctor list/detail/filter Specialty/create/update; public UI và Admin master data | Backend CRUD/filter; RTL Doctor filtering | DONE Backend + Frontend |
-| FR-SCH-01..05, BR-05..07 | Phase 2 schema; Phase 3 Backend; Phase 4 Frontend; Phase 6 audit | Time/range validation, advisory transaction lock theo Doctor, overlap query, slot generation, block/unblock; UI xem lịch và slot khả dụng | Phase 2 constraints; Phase 3 overlap/slot/block; Phase 4 available-slot; Phase 6 hai transaction chồng lấn và adjacent-range test | DONE; race condition đã được kiểm chứng với PostgreSQL thật |
+| FR-DOC-01..03 | Phase 2 schema; Phase 3 Backend; Phase 4 Frontend; post-Phase 14 workflow fix | Doctor list/detail/filter Specialty/create/update; public UI và Admin master data; Admin chọn candidate không cần UUID hoặc provision User role DOCTOR + Doctor profile trong một transaction | Backend CRUD/filter/candidate/provisioning/rollback/audit; RTL Doctor filtering và Dialog hai chế độ | DONE Backend + Frontend |
+| FR-SCH-01..05, BR-05..07 | Phase 2 schema; Phase 3 Backend; Phase 4 Frontend; Phase 6 audit; post-Phase 14 workflow fix | Time/range validation, advisory transaction lock theo Doctor, overlap query, slot generation, block/unblock; Doctor UI tạo/sửa/hủy lịch, sinh và quản lý slot; Patient tiếp tục chỉ thấy slot khả dụng | Phase 2 constraints; Phase 3 overlap/slot/block; Phase 6 PostgreSQL race/adjacent; post-fix HTTP/service và Frontend workflow tests | DONE; race và UI workflow đã được kiểm chứng |
 | FR-APT-01..08, BR-08..13 | Phase 2 schema; Phase 3 Backend; Phase 4 Frontend; Phase 6 audit/E2E | `uq_appointments_occupied_slot` giữ slot cho `CONFIRMED`, `COMPLETED`, `NO_SHOW`; booking dùng `SELECT ... FOR UPDATE`; cancel/rebook/outcome; Patient và Doctor UI | 5 concurrent booking chỉ 1 success; 4 conflict 409; transition/slot consistency; cancellation boundary; API và live browser E2E | DONE Business MVP; service Phase 3 được reuse |
 | FR-MR-01..06, BR-21..24, UC-12/13, NFR-PRIV-02, NFR-DATA-03, NFR-TEST-02, AC-MR-01..04 | Phase 2 schema; Phase 3 Backend; Phase 4 Frontend; Phase 5 auth/RBAC; Phase 6 E2E | Appointment 1:0..1 MedicalRecord; completed-only; Doctor ownership; Patient own-read; Staff/Admin không mặc nhiên đọc; create/get/update/history; audit metadata; không DELETE; Doctor form và Patient read-only UI | Phase 6 authenticated E2E kiểm tra invalid state, wrong doctor, duplicate, update, privacy và audit; live UI Patient → Doctor → Patient | DONE Business MVP; không viết lại service |
 | FR-DOCS-01..06 | Phase 2 schema; Phase 3 Backend; Phase 4 Frontend; Phase 8 ingestion | Existing metadata/review được reuse; JSON/CSV/PDF/DOCX loader, APPROVED-only deterministic ingest, re-ingest/rollback và source traceability được thêm vào cùng module | Governance/re-ingest/failure/security tests; official subset ingest | DONE phạm vi RAG V1; full corpus là explicit operation |
@@ -33,8 +33,8 @@ Quy ước trạng thái:
 | FR-HO-01..04, UC-08, AC-AI-06, AC-AI-08, NFR-RT-01 | Phase 3/4 REST; Phase 9 Tool; Phase 11 WebSocket | Tool/Risk gọi lại HandoffService; authenticated Staff/Admin WebSocket phát metadata sau commit; PostgreSQL/REST authoritative và reload sau reconnect | Handoff delegation/identity; WebSocket auth/role/event/failure/reconnect; full workflow regression | DONE REST + Tool + WebSocket Phase 11 |
 | FR-VOICE-01..06, UC-09/10, AC-VOICE-01..03, BR-13/19, NFR-USAB-02, NFR-COMP-01 | Phase 11 | Browser getUserMedia + MediaRecorder push-to-talk; authenticated faster-whisper Vietnamese STT; transcript vào chat pipeline hiện có; browser SpeechSynthesis TTS và text fallback | Audio validation/cleanup/STT; Browser API success/failure/TTS; transcript→existing chat tests | DONE Phase 11; SSE optional không triển khai |
 | NFR-AUD-01 | Phase 2 schema; Phase 3 Backend | AuditLog metadata-only; MedicalRecord create/update không ghi nội dung lâm sàng vào audit | Seed/audit schema check và Phase 3 privacy/audit test | DONE cho nghiệp vụ Phase 3 hiện có |
-| NFR-USAB-01/02 | Phase 1 foundation; Phase 4–13 Frontend | Loading/error/empty/success; AI/Voice/realtime UX; Phase 13 lazy route loading giảm initial chunk | 37/37, lint/build; largest chunk 878,33 → 398,03 kB; Playwright 3/3 | DONE Phase 13 |
-| NFR-TEST-01/02 | Phase 1–14 | PostgreSQL concurrency/integration; Auth/AI/Voice/WebSocket/RAG/security/failure/privacy; browser smoke; final requirement coverage | Backend 160/160 với DB thật; Frontend 37/37; Playwright 3/3; SRS identifiers 159/159 | DONE Phase 14 |
+| NFR-USAB-01/02 | Phase 1 foundation; Phase 4–13 Frontend; post-Phase 14 fixes | Loading/error/empty/success; AI/Voice/realtime UX; Phase 13 lazy route loading; Admin không nhập UUID kỹ thuật và Doctor tự quản lý lịch/slot | 41/41, lint/build; largest chunk khoảng 398.03 kB; Playwright 4/4 | DONE |
+| NFR-TEST-01/02 | Phase 1–14; post-Phase 14 regression | PostgreSQL concurrency/integration; Auth/AI/Voice/WebSocket/RAG/security/failure/privacy; Doctor provisioning/Schedule workflow; browser smoke; final requirement coverage | Backend 162/162 với DB thật; Frontend 41/41; Playwright 4/4; SRS identifiers 159/159 | DONE |
 
 ## Chi tiết Phase 2 Final Audit
 
@@ -321,7 +321,7 @@ Known issues được chấp nhận và ghi trong `phase-13.md`: STT accuracy th
 | Final code/secret/dataset audit | Sửa docstring Auth stale; không phát hiện real credential; `.env`/dataset được ignore; không có full 1 GB dataset trong source |
 | Dependency change | `follow-redirects` cập nhật lên 1.16.2 bằng non-breaking audit fix; Frontend regression lại toàn bộ |
 | Migration | Giữ nguyên `0001 → 0002 → 0003 → 0004`; current/heads/check PASS; không có migration Phase 14 |
-| Final regression | Backend 160/160; Frontend 37/37; lint/build PASS; Playwright scoped smoke 3/3 |
+| Final regression | Backend 162/162; Frontend 41/41; lint/build PASS; Playwright scoped smoke 3/3 |
 | Database | PostgreSQL 18.6; pgvector 0.8.7; VECTOR/cosine/Alembic check PASS; seed hai lần PASS |
 | Security | `pip-audit` sạch; npm production audit 0; no Critical/High open; 12 Moderate dev ESLint/minimatch accepted |
 | Requirement coverage | 159/159 SRS v1.1 identifiers xuất hiện trong final matrix |
@@ -331,3 +331,57 @@ Known issues được chấp nhận và ghi trong `phase-13.md`: STT accuracy th
 **PHASE 14: PASS — FINAL RELEASE READINESS: READY cho phạm vi đồ án/demo có kiểm soát.**
 
 Không có Phase 15 và không thêm feature mới sau khi chốt, trừ bug fix bắt buộc kèm regression.
+
+## Post-Phase 14 workflow fixes — 06/11/2026
+
+| Requirement / issue | Implementation | Test / kiểm chứng | Status |
+| --- | --- | --- | --- |
+| ISSUE-001 / FR-DOC-03 / NFR-USAB-01 | Admin chọn User `ACTIVE` role `DOCTOR` chưa có profile bằng tên/email; không nhập raw UUID | Candidate RBAC/filter/service/HTTP tests; Frontend candidate Dialog test | DONE |
+| ENH-001 / FR-DOC-03 | Admin có thể tạo đồng thời User role `DOCTOR` và Doctor profile; Argon2, role assignment, audit metadata-only và transaction rollback | Provisioning service/HTTP/duplicate/audit/password-hash tests; Frontend provision Dialog test | DONE |
+| ISSUE-002 / FR-SCH-01..05 | Doctor UI tạo/sửa/hủy schedule, sinh slot, block/unblock; endpoint protected đọc toàn bộ slot của schedule | Schedule ownership/state/service/HTTP tests; Frontend create/generate/block tests | DONE |
+| Regression | Không đổi schema/migration; reuse Doctor/Schedule modules và business rules hiện có | Backend 162/162; Frontend 41/41; ESLint/build PASS | DONE |
+
+## Post-Phase-14 full business workflow verification — 06/11/2026
+
+| Requirement / workflow | Live implementation evidence | Test / kiểm chứng | Status |
+| --- | --- | --- | --- |
+| FR-SPE-01..03 | Admin create/edit/status bằng UI; Specialty active dùng ngay trong Patient discovery | Playwright Edge + PostgreSQL thật | VERIFIED DONE |
+| FR-DOC-01..03 / ISSUE-001 | Candidate synthetic được link bằng tên/email, không raw UUID; biến mất sau create | Playwright + Backend candidate filter/RBAC regression | VERIFIED DONE |
+| FR-DOC-01..03 / ENH-001 | Admin provision User + DOCTOR role + profile; Doctor login thật | Playwright; PostgreSQL Argon2/role/profile/audit readback; rollback regression | VERIFIED DONE |
+| FR-SCH-01..05 / ISSUE-002 | Doctor create/update Schedule, generate 3 slots, block 1; reload giữ state | Playwright + PostgreSQL concurrency regression | VERIFIED DONE |
+| FR-APT-01..08 | Patient discovery/book/cancel/rebook; Doctor COMPLETE | Playwright + occupied-slot/concurrency integration | VERIFIED DONE |
+| FR-MR-01..06, UC-12/13 | Doctor create record sau COMPLETED; Patient own-read read-only; Staff/Admin UI denied | Playwright + MedicalRecord privacy/invariant regression | VERIFIED DONE |
+| NFR-USAB-01/02 | Sửa controlled Select Doctor Dialog và accessible labels Booking | Vitest 41/41; lint/build; Playwright full 4/4 | DONE post-Phase-14 fix |
+| NFR-TEST-01/02 | Full non-AI multi-role UI/API/DB golden path | Backend 162/162; Frontend 41/41; Playwright 4/4 | DONE; BUSINESS READY |
+
+## ENH-KB-001 — Doctor Knowledge Contribution (current final evidence, 18/11/2026)
+
+ENH-KB-001 là enhancement sau Phase 14, không được ghi ngược vào lịch sử Phase 8/14. Workflow đã kiểm chứng: Doctor upload tài liệu synthetic → `PENDING + NOT_INGESTED` → Admin inspect/download → REJECT kèm lý do → Doctor sửa metadata/resubmit → Admin APPROVE → xác minh chưa retrievable → Admin Ingest → BGE-M3 → `COMPLETED` → chunks trong PostgreSQL/pgvector → retriever trả đúng marker/document/title. Patient và Staff không có quyền quản lý corpus; live Gemini và full dataset 1 GB không phải điều kiện Golden Path.
+
+| Requirement | Implementation | API / UI | Test / evidence | Status |
+| --- | --- | --- | --- | --- |
+| FR-DOCS-07 | Secure multipart upload, ActorContext làm owner, PDF/DOCX/CSV/JSON/JSONL | `POST /documents/contributions`; Doctor **Tài liệu đóng góp** | KB-001B targeted upload + KB-001C Playwright Golden Path | VERIFIED DONE |
+| FR-DOCS-08 | Original filename, generated storage key, verified MIME/size và SHA-256; local protected storage | Contribution detail; Admin safe download theo document id | Upload/download/path-containment/compensation tests | VERIFIED DONE |
+| FR-DOCS-09 | Doctor list/get own; edit/resubmit PENDING/REJECTED; ownership Backend-side | Doctor contribution list/detail/dialog | Ownership/lifecycle tests + Golden Path reject/resubmit | VERIFIED DONE |
+| FR-DOCS-10 | Admin review APPROVE/REJECT; REJECT bắt buộc reason; audit metadata | Admin Document review UI và review endpoints | Reject-reason/RBAC tests + Golden Path | VERIFIED DONE |
+| FR-DOCS-11 | DocumentIngestionService hiện có; review và ingestion độc lập; retrieval filter APPROVED + COMPLETED | Admin Ingest action; RAG retriever | Contribution + RAG integration 25 passed; pre/post-ingest retrieval assertion | VERIFIED DONE |
+| FR-DOCS-12 | Unique SHA-256 constraint và safe duplicate response | Upload API/UI conflict feedback | Duplicate API/service/DB tests | VERIFIED DONE |
+| BR-25..30 | ActorContext owner; Doctor/Admin separation; independent lifecycles; duplicate policy; no silent replacement; resubmit reset | Protected contribution/review/ingest workflows | RBAC, ownership, lifecycle, duplicate và Golden Path | VERIFIED DONE |
+| NFR-DOCS-SEC-01/02 | Generated name, containment, allowlist, MIME/content, streaming 25 MB, compensation, Admin-only safe download | Backend upload/download boundaries | Backend contribution/download targeted 19 passed | VERIFIED DONE |
+| NFR-DOCS-PRIV-01 | MedicalRecord hard isolation khỏi Document/Chunk/embedding/RAG/Gemini | Không có MedicalRecord corpus/tool endpoint | RAG isolation + service assertions | VERIFIED DONE |
+| NFR-DOCS-AUD-01 | Metadata-only audit cho upload/resubmit/review/ingest | Audit service hiện có | Audit/privacy regression | VERIFIED DONE |
+| AC-DOCS-09..13 | Upload/ownership, secure failures, RBAC/review, controlled ingest/retrieval, no silent replacement | Doctor + Admin UI trên module Document hiện có | Playwright full 5/5 + targeted Backend/Frontend | PASS |
+| DR-11 | Reuse Document module/pipeline; Doctor contribution → Admin governance → controlled retrieval; replacement deferred | SRS v1.2 và ENH-KB-001 | Architecture/source/evidence audit | IMPLEMENTED |
+
+### Current final regression evidence
+
+| Gate | Current result |
+| --- | --- |
+| Backend full PostgreSQL regression | **191 passed** |
+| Frontend full | **54 passed** |
+| Frontend KB-001C targeted | **8 passed** |
+| Backend contribution/download targeted | **19 passed** |
+| Backend contribution + RAG integration | **25 passed** |
+| Playwright full suite | **5/5 passed** |
+| Alembic | `0005_document_contribution`; exactly one head; no drift |
+| ESLint / production build / compileall / pip check | **PASS** |

@@ -29,7 +29,8 @@ describe('Phase 8 RAG UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Gửi' }))
     expect(await screen.findByText('Thông tin tham khảo an toàn.')).toBeInTheDocument()
     expect(screen.getByText('Nguồn tham khảo')).toBeInTheDocument()
-    expect(screen.getByText(/Tài liệu sức khỏe.*kien_thuc_y_khoa/)).toBeInTheDocument()
+    expect(screen.getByText('Tài liệu sức khỏe')).toBeInTheDocument()
+    expect(screen.queryByText(/kien_thuc_y_khoa/)).not.toBeInTheDocument()
     await waitFor(() => expect(vi.mocked(sendChatMessage).mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({ use_rag: true }),
     ))

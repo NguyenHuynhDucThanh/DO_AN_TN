@@ -1,9 +1,10 @@
 """Strict, identity-free argument contracts for Gemini function calls."""
 
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ToolArguments(BaseModel):
@@ -24,8 +25,16 @@ class ListDoctorsArgs(ToolArguments):
 
 
 class AvailableSlotsArgs(ToolArguments):
-    doctor_id: UUID
+    doctor_id: UUID | None = None
+    specialty_id: UUID | None = None
     date: date
+    period: Literal["ALL", "MORNING", "AFTERNOON", "EVENING"] = "ALL"
+
+    @model_validator(mode="after")
+    def require_doctor_or_specialty(self) -> "AvailableSlotsArgs":
+        if self.doctor_id is None and self.specialty_id is None:
+            raise ValueError("doctor_id or specialty_id is required")
+        return self
 
 
 class CreateBookingArgs(ToolArguments):

@@ -18,9 +18,10 @@ const navItems: NavItem[] = [
   { label: 'Lịch sử khám', to: '/medical-history', roles: ['PATIENT'] },
   { label: 'Lịch làm việc', to: '/doctor/schedules', roles: ['DOCTOR'] },
   { label: 'Lịch hẹn phụ trách', to: '/doctor/appointments', roles: ['DOCTOR'] },
+  { label: 'Tài liệu đóng góp', to: '/doctor/contributions', roles: ['DOCTOR'] },
   { label: 'Quản lý chuyên khoa', to: '/admin/specialties', roles: ['ADMIN'] },
   { label: 'Quản lý bác sĩ', to: '/admin/doctors', roles: ['ADMIN'] },
-  { label: 'Tài liệu RAG', to: '/admin/documents', roles: ['ADMIN', 'STAFF'] },
+  { label: 'Tài liệu tri thức', to: '/admin/documents', roles: ['ADMIN', 'STAFF'] },
   { label: 'Yêu cầu hỗ trợ', to: '/handoffs' },
 ]
 
@@ -28,14 +29,35 @@ export function AppShell() {
   const theme = useTheme()
   const desktop = useMediaQuery(theme.breakpoints.up('md'))
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const { user, status, logout } = useAuth()
   const location = useLocation()
   const visibleItems = navItems.filter((item) => !item.roles || item.roles.some((role) => user?.roles.includes(role)))
 
   const navigation = (
-    <Stack component="nav" spacing={0.5} sx={{ p: 2, minWidth: 250 }}>
-      <Typography variant="overline" color="text.secondary" sx={{ px: 1, mb: 1 }}>Điều hướng</Typography>
-      {visibleItems.map((item) => (
+    <Stack component="nav" spacing={0.5} sx={{ p: sidebarCollapsed && desktop ? 1 : 2, minWidth: desktop ? 0 : 250 }}>
+      {desktop ? (
+        sidebarCollapsed ? (
+          <IconButton
+            aria-label="Mở thanh điều hướng"
+            onClick={() => setSidebarCollapsed(false)}
+            sx={{ alignSelf: 'center', mb: 1 }}
+          >
+            ☰
+          </IconButton>
+        ) : (
+          <IconButton
+            aria-label="Thu gọn thanh điều hướng"
+            onClick={() => setSidebarCollapsed(true)}
+            sx={{ alignSelf: 'flex-start', mb: 1 }}
+          >
+            ☰
+          </IconButton>
+        )
+      ) : (
+        <IconButton aria-label="Đóng thanh điều hướng" onClick={() => setDrawerOpen(false)} sx={{ alignSelf: 'flex-end', mb: 1 }}>×</IconButton>
+      )}
+      {(!desktop || !sidebarCollapsed) && visibleItems.map((item) => (
         <Button
           key={item.to}
           component={RouterLink}
@@ -71,7 +93,7 @@ export function AppShell() {
         </Toolbar>
       </AppBar>
       <Stack direction="row" sx={{ alignItems: 'stretch' }}>
-        {desktop ? <Box component="aside" sx={{ width: 280, flexShrink: 0, borderRight: '1px solid', borderColor: 'divider', minHeight: 'calc(100vh - 64px)', bgcolor: 'background.paper' }}>{navigation}</Box> : (
+        {desktop ? <Box component="aside" sx={{ width: sidebarCollapsed ? 72 : 280, flexShrink: 0, borderRight: '1px solid', borderColor: 'divider', minHeight: 'calc(100vh - 64px)', bgcolor: 'background.paper', overflow: 'hidden' }}>{navigation}</Box> : (
           <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>{navigation}</Drawer>
         )}
         <Container component="main" maxWidth="xl" sx={{ py: { xs: 3, md: 5 }, minWidth: 0 }}>

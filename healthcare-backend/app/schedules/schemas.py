@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AliasPath, BaseModel, ConfigDict, Field, field_validator
 
 from app.models.enums import ScheduleStatus, SlotStatus
 
@@ -55,6 +55,23 @@ class SlotRead(BaseModel):
     status: SlotStatus
     created_at: datetime
     updated_at: datetime
+
+
+class AvailableSlotRead(SlotRead):
+    """Public slot projection with enough context to distinguish equal times."""
+
+    doctor_id: UUID = Field(
+        validation_alias=AliasPath("schedule", "doctor", "id")
+    )
+    doctor_name: str = Field(
+        validation_alias=AliasPath("schedule", "doctor", "user", "full_name")
+    )
+    specialty_id: UUID = Field(
+        validation_alias=AliasPath("schedule", "doctor", "specialty", "id")
+    )
+    specialty_name: str = Field(
+        validation_alias=AliasPath("schedule", "doctor", "specialty", "name")
+    )
 
 
 class SlotStatusUpdate(BaseModel):

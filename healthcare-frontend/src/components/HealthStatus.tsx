@@ -18,20 +18,17 @@ export function HealthStatus() {
       {health.isError && (
         <Alert severity="error">
           {databaseNotReady
-            ? 'Backend đã phản hồi nhưng PostgreSQL hoặc pgvector chưa sẵn sàng.'
-            : 'Chưa kết nối được Backend. Hãy kiểm tra dịch vụ và cấu hình kết nối.'}
+            ? 'Hệ thống đang khởi động dữ liệu. Vui lòng thử lại sau ít phút.'
+            : 'Chưa kết nối được hệ thống. Vui lòng thử lại.'}
         </Alert>
       )}
       {health.data && !health.isError && (
         <>
           <Alert severity={health.data.status === 'ok' ? 'success' : 'warning'}>
             {health.data.status === 'ok'
-              ? 'Kết nối thành công. Backend, PostgreSQL và pgvector đã sẵn sàng.'
-              : 'Backend chưa sẵn sàng.'}
+              ? 'Kết nối thành công. Hệ thống đã sẵn sàng.'
+              : 'Hệ thống chưa sẵn sàng.'}
           </Alert>
-          <Typography variant="body2" color="text.secondary">
-            Ứng dụng: {health.data.application} · Môi trường: {health.data.environment}
-          </Typography>
         </>
       )}
       <Box>

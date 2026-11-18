@@ -9,12 +9,27 @@ from app.ai.schemas import ChatHistoryItem, ChatResponse
 from app.core.errors import ApplicationError
 from app.documents.embeddings import EmbeddingError, EmbeddingService
 from app.rag.retrieval import RetrievalStrategy
-from app.rag.schemas import RetrievedChunk
+from app.rag.schemas import RagSource, RetrievedChunk
 
 NO_CONTEXT_ANSWER = (
     "Hiện mình chưa tìm thấy đủ thông tin phù hợp trong nguồn dữ liệu đã được phê duyệt. "
     "Bạn nên trao đổi với bác sĩ hoặc nhân viên y tế nếu cần đánh giá chuyên môn."
 )
+
+
+def _unique_sources(chunks: list[RetrievedChunk]) -> list[RagSource]:
+    sources: list[RagSource] = []
+    seen: set[tuple[object, ...]] = set()
+    for chunk in chunks:
+        source = chunk.source
+        key = (
+            source.title or source.source_name or str(source.document_id),
+            source.page,
+        )
+        if key not in seen:
+            seen.add(key)
+            sources.append(source)
+    return sources
 
 
 class RagService:
@@ -55,4 +70,4 @@ class RagService:
             f"[Nguồn {index}]\n{chunk.content}" for index, chunk in enumerate(chunks, 1)
         )
         answer = await self.gemini.generate_grounded_reply(question, history, context)
-        return ChatResponse(answer=answer, sources=[chunk.source for chunk in chunks])
+        return ChatResponse(answer=answer, sources=_unique_sources(chunks))

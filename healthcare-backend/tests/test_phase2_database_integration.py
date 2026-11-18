@@ -63,17 +63,35 @@ def test_confirmed_appointment_prevents_double_booking(real_database: Engine) ->
         transaction = connection.begin()
         row = connection.execute(
             text(
-                "SELECT a.patient_id, a.schedule_slot_id FROM appointments a "
-                "WHERE a.status = 'CONFIRMED' LIMIT 1"
+                "SELECT ds.id AS schedule_id, u.id AS patient_id "
+                "FROM doctor_schedules ds CROSS JOIN users u "
+                "JOIN user_roles ur ON ur.user_id = u.id "
+                "JOIN roles r ON r.id = ur.role_id "
+                "WHERE r.code = 'PATIENT' LIMIT 1"
             )
         ).mappings().one()
+        slot_id = connection.execute(
+            text(
+                "INSERT INTO schedule_slots (schedule_id, start_at, end_at, status) "
+                "VALUES (:schedule_id, '2099-01-01 01:00:00+00', "
+                "'2099-01-01 01:30:00+00', 'BOOKED') RETURNING id"
+            ),
+            {"schedule_id": row["schedule_id"]},
+        ).scalar_one()
+        connection.execute(
+            text(
+                "INSERT INTO appointments (patient_id, schedule_slot_id, status, booked_at) "
+                "VALUES (:patient_id, :slot_id, 'CONFIRMED', now())"
+            ),
+            {"patient_id": row["patient_id"], "slot_id": slot_id},
+        )
         with pytest.raises(IntegrityError) as exc_info:
             connection.execute(
                 text(
                     "INSERT INTO appointments (patient_id, schedule_slot_id, status, booked_at) "
                     "VALUES (:patient_id, :slot_id, 'CONFIRMED', now())"
                 ),
-                {"patient_id": row["patient_id"], "slot_id": row["schedule_slot_id"]},
+                {"patient_id": row["patient_id"], "slot_id": slot_id},
             )
         assert exc_info.value.orig.diag.constraint_name == "uq_appointments_occupied_slot"
         transaction.rollback()

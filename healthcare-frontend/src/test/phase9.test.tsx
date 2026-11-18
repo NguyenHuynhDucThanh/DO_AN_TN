@@ -47,11 +47,13 @@ describe('Phase 9 explicit booking confirmation UI', () => {
     expect(await screen.findByLabelText('Xác nhận đặt lịch')).toBeInTheDocument()
     expect(screen.getByText('Bác sĩ Demo')).toBeInTheDocument()
     expect(screen.getByText('Tim mạch')).toBeInTheDocument()
+    expect(screen.queryByText(/create_booking|11111111-1111-4111-8111-111111111111/)).not.toBeInTheDocument()
     expect(confirmChatBooking).not.toHaveBeenCalled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Xác nhận đặt lịch' }))
     await waitFor(() => expect(vi.mocked(confirmChatBooking).mock.calls[0]?.[0]).toBe('signed-confirmation-token'))
-    expect(await screen.findByText(/Đặt lịch thành công/)).toBeInTheDocument()
+    expect(await screen.findByText(/Đặt lịch thành công.*LH-44444444/)).toBeInTheDocument()
+    expect(screen.queryByText(/44444444-4444-4444-8444-444444444444/)).not.toBeInTheDocument()
   })
 
   it('shows a controlled 409 conflict and asks for another slot', async () => {
@@ -68,7 +70,7 @@ describe('Phase 9 explicit booking confirmation UI', () => {
     fireEvent.change(screen.getByLabelText('Tin nhắn'), { target: { value: 'Đặt lịch' } })
     fireEvent.click(screen.getByRole('button', { name: 'Gửi' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Xác nhận đặt lịch' }))
-    expect(await screen.findByText(/Slot này vừa được người khác đặt/)).toBeInTheDocument()
+    expect(await screen.findByText(/Khung giờ này vừa được người khác đặt/)).toBeInTheDocument()
     expect(screen.queryByText('private')).not.toBeInTheDocument()
   })
 })

@@ -98,11 +98,20 @@ class ToolExecutor:
             )
         if isinstance(arguments, AvailableSlotsArgs):
             day_start = datetime.combine(arguments.date, time.min, VIETNAM_TIMEZONE)
-            day_end = day_start + timedelta(days=1)
+            period_bounds = {
+                "ALL": (timedelta(), timedelta(days=1)),
+                "MORNING": (timedelta(), timedelta(hours=12)),
+                "AFTERNOON": (timedelta(hours=12), timedelta(hours=18)),
+                "EVENING": (timedelta(hours=18), timedelta(days=1)),
+            }
+            start_offset, end_offset = period_bounds[arguments.period]
+            range_start = day_start + start_offset
+            range_end = day_start + end_offset
             rows = self.schedules.available_slots(
-                day_start.astimezone(timezone.utc),
-                day_end.astimezone(timezone.utc),
+                range_start.astimezone(timezone.utc),
+                range_end.astimezone(timezone.utc),
                 doctor_id=arguments.doctor_id,
+                specialty_id=arguments.specialty_id,
             )
             return ToolResult(
                 name=name,
@@ -117,9 +126,12 @@ class ToolExecutor:
                             "start_at": item.start_at.isoformat(),
                             "end_at": item.end_at.isoformat(),
                         }
-                        for item in rows
+                        for item in rows[:12]
                     ],
                     "count": len(rows),
+                    "returned_count": min(len(rows), 12),
+                    "date": arguments.date.isoformat(),
+                    "period": arguments.period,
                 },
             )
         if isinstance(arguments, CreateBookingArgs):

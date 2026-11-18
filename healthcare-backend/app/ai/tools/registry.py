@@ -32,7 +32,11 @@ TOOL_DECLARATIONS = [
     ),
     types.FunctionDeclaration(
         name="available_slots",
-        description="Tra cứu các slot còn trống của bác sĩ trong một ngày theo giờ Việt Nam.",
+        description=(
+            "Tra cứu slot còn trống theo ngày và buổi tại Việt Nam. Có thể truyền specialty_id "
+            "để tìm trên tất cả bác sĩ thuộc chuyên khoa; ưu tiên cách này khi người dùng chưa "
+            "chọn bác sĩ. Chỉ truyền doctor_id khi người dùng đã chọn bác sĩ cụ thể."
+        ),
         parameters_json_schema=AvailableSlotsArgs.model_json_schema(),
     ),
     types.FunctionDeclaration(

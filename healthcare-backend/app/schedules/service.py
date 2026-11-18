@@ -49,6 +49,11 @@ class ScheduleService:
             raise NotFoundError("Schedule was not found.", "schedule_not_found")
         return schedule
 
+    def list_slots(self, schedule_id: UUID, actor: ActorContext) -> list[ScheduleSlot]:
+        schedule = self.get(schedule_id)
+        self._authorize_doctor(actor, schedule.doctor.user_id)
+        return self.repository.list_slots(schedule.id)
+
     def create(self, data: ScheduleCreate, actor: ActorContext) -> DoctorSchedule:
         doctor = self.repository.get_doctor(data.doctor_id)
         if doctor is None:
@@ -138,10 +143,11 @@ class ScheduleService:
         to_at: datetime,
         doctor_id: UUID | None = None,
         specialty_id: UUID | None = None,
+        limit: int = 100,
     ) -> list[ScheduleSlot]:
         if to_at <= from_at:
             raise BadRequestError("The search end must be after its start.", "invalid_time_range")
-        return self.repository.available_slots(from_at, to_at, doctor_id, specialty_id)
+        return self.repository.available_slots(from_at, to_at, doctor_id, specialty_id, limit)
 
     def get_slot(self, slot_id: UUID) -> ScheduleSlot:
         """Return one slot with its business relationships for read-only adapters."""
@@ -159,6 +165,8 @@ class ScheduleService:
         self._authorize_doctor(actor, slot.schedule.doctor.user_id)
         if slot.status == SlotStatus.BOOKED:
             raise ConflictError("A booked slot cannot be blocked or unblocked.", "slot_booked")
+        if slot.schedule.status != ScheduleStatus.ACTIVE:
+            raise ConflictError("A cancelled schedule cannot change slot status.", "schedule_cancelled")
         slot.status = SlotStatus.BLOCKED if data.blocked else SlotStatus.AVAILABLE
         self.session.commit()
         self.session.refresh(slot)

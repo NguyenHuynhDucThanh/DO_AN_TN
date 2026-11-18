@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 
 from app.ai.errors import ChatbotUnavailableError
 from app.ai.gemini_client import GeminiClient
@@ -24,6 +25,10 @@ from app.core.config import Settings
 from app.rag.service import RagService
 
 logger = logging.getLogger(__name__)
+MAX_TOOL_ROUNDS = 6
+UUID_PATTERN = re.compile(
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
+)
 
 RISK_WARNING = (
     "Đây là cảnh báo an toàn, không phải chẩn đoán. Nội dung bạn mô tả có dấu hiệu "
@@ -31,6 +36,25 @@ RISK_WARNING = (
     "ở hoặc đến cơ sở y tế gần nhất ngay; nếu có thể, hãy nhờ một người ở gần hỗ trợ. "
     "Đừng chờ chatbot phản hồi để tìm trợ giúp."
 )
+
+
+def _user_facing_tool_answer(value: str) -> str:
+    """Keep technical database identifiers out of chatbot prose."""
+    cleaned = re.sub(
+        rf"(?im)^\s*[-*]?\s*(?:\*\*)?Mã\s+(?:slot|khung giờ)(?:\*\*)?\s*:\s*`?{UUID_PATTERN.pattern}`?\s*$",
+        "",
+        value,
+    )
+    cleaned = re.sub(rf"\s*\(`?{UUID_PATTERN.pattern}`?\)", "", cleaned)
+    cleaned = re.sub(rf"`?{UUID_PATTERN.pattern}`?", "", cleaned)
+    visible_lines = []
+    for line in cleaned.splitlines():
+        plain_line = line.replace("*", "").replace("`", "").casefold()
+        if re.search(r"mã\s+(?:slot|khung giờ)\s*:", plain_line):
+            continue
+        if line.strip():
+            visible_lines.append(line.rstrip())
+    return "\n".join(visible_lines).strip()
 
 
 class ChatOrchestrator:
@@ -112,54 +136,99 @@ class ChatOrchestrator:
         turn = await self.gemini.request_tool_turn(
             request.message, request.history, None, GEMINI_TOOL
         )
-        if not turn.calls:
-            return ChatResponse(
-                answer=(
-                    "Mình chưa lấy được dữ liệu nghiệp vụ xác thực. Bạn hãy nêu rõ chuyên khoa, "
-                    "bác sĩ, ngày muốn xem lịch hoặc dùng màn hình đặt lịch trực tiếp."
-                )
-            )
-
         results: list[ToolResult] = []
-        for call in turn.calls:
-            try:
-                result = await asyncio.wait_for(
-                    self.tools.execute(call.name, call.arguments, actor),
-                    timeout=self.timeout_seconds,
+        seen_calls: set[tuple[str, str]] = set()
+
+        for _round in range(MAX_TOOL_ROUNDS):
+            if not turn.calls:
+                return ChatResponse(
+                    answer=_user_facing_tool_answer(turn.text) if turn.text else (
+                        "Mình chưa lấy được dữ liệu nghiệp vụ xác thực. Bạn có thể mô tả "
+                        "vị trí khó chịu và thời gian muốn khám; không cần biết trước chuyên khoa."
+                    ),
+                    tool_results=results,
                 )
-            except (asyncio.TimeoutError, TimeoutError):
-                raise ChatbotUnavailableError(
-                    "The requested healthcare action took too long. Please try again.",
-                    "tool_timeout",
-                ) from None
-            results.append(result)
 
-        confirmations = [
-            BookingConfirmation.model_validate(result.data)
-            for result in results
-            if result.status == "CONFIRMATION_REQUIRED"
-        ]
-        if confirmations:
-            # Mutations never follow free-form text. The dedicated HTTP endpoint is
-            # the only path that can consume this signed confirmation.
-            confirmation = confirmations[0]
-            return ChatResponse(
-                answer=(
-                    "Vui lòng kiểm tra bác sĩ và thời gian bên dưới, sau đó bấm "
-                    "Xác nhận đặt lịch nếu thông tin chính xác."
-                ),
-                tool_results=results,
-                booking_confirmation=confirmation,
+            round_results: list[ToolResult] = []
+            for call in turn.calls:
+                signature = (call.name, repr(sorted(call.arguments.items())))
+                if signature in seen_calls:
+                    return ChatResponse(
+                        answer=(
+                            "Mình chưa thể thu hẹp thêm lựa chọn từ dữ liệu hiện có. "
+                            "Bạn hãy bổ sung thời gian muốn khám hoặc dùng màn hình tìm lịch trống."
+                        ),
+                        tool_results=results,
+                    )
+                seen_calls.add(signature)
+                try:
+                    result = await asyncio.wait_for(
+                        self.tools.execute(call.name, call.arguments, actor),
+                        timeout=self.timeout_seconds,
+                    )
+                except (asyncio.TimeoutError, TimeoutError):
+                    raise ChatbotUnavailableError(
+                        "The requested healthcare action took too long. Please try again.",
+                        "tool_timeout",
+                    ) from None
+                round_results.append(result)
+                results.append(result)
+
+            confirmations = [
+                BookingConfirmation.model_validate(result.data)
+                for result in round_results
+                if result.status == "CONFIRMATION_REQUIRED"
+            ]
+            if confirmations:
+                # The signed confirmation endpoint remains the only booking mutation path.
+                return ChatResponse(
+                    answer=(
+                        "Tôi đã tìm một lịch phù hợp. Vui lòng kiểm tra bác sĩ và thời gian "
+                        "bên dưới, sau đó bấm Xác nhận đặt lịch nếu thông tin chính xác."
+                    ),
+                    tool_results=results,
+                    booking_confirmation=confirmations[0],
+                )
+
+            if any(result.name == "handoff_to_staff" for result in round_results):
+                return ChatResponse(
+                    answer="Yêu cầu đã được chuyển cho nhân viên và đang chờ tiếp nhận.",
+                    tool_results=results,
+                )
+
+            slot_results = [
+                result for result in round_results if result.name == "available_slots"
+            ]
+            if slot_results and all(result.data.get("count") == 0 for result in slot_results):
+                slot_data = slot_results[0].data
+                period_labels = {
+                    "MORNING": "buổi sáng",
+                    "AFTERNOON": "buổi chiều",
+                    "EVENING": "buổi tối",
+                    "ALL": "cả ngày",
+                }
+                period = period_labels.get(str(slot_data.get("period")), "thời gian này")
+                date_value = slot_data.get("date")
+                date_text = f" ngày {date_value}" if date_value else ""
+                return ChatResponse(
+                    answer=(
+                        f"Hiện không có lịch trống {period}{date_text} trong chuyên khoa phù hợp. "
+                        "Bạn có thể yêu cầu tìm ngày hoặc buổi khác."
+                    ),
+                    tool_results=results,
+                )
+
+            turn = await self.gemini.continue_tool_turn(
+                turn,
+                [result.model_dump(mode="json") for result in round_results],
+                GEMINI_TOOL,
             )
 
-        if any(result.name == "handoff_to_staff" for result in results):
-            return ChatResponse(
-                answer="Yêu cầu đã được chuyển cho nhân viên và đang chờ tiếp nhận.",
-                tool_results=results,
-            )
-
-        answer = await self.gemini.complete_tool_turn(
-            turn, [result.model_dump(mode="json") for result in results]
+        return ChatResponse(
+            answer=(
+                "Tôi đã tra cứu nhưng chưa thể hoàn tất việc chọn lịch một cách an toàn. "
+                "Bạn có thể chọn một trong các kết quả đã hiển thị hoặc dùng màn hình tìm lịch trống."
+            ),
+            tool_results=results,
         )
-        return ChatResponse(answer=answer, tool_results=results)
 

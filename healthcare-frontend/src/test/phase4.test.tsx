@@ -14,7 +14,7 @@ import { createMedicalRecord, getMedicalRecordByAppointment, listMedicalHistory 
 import { listAvailableSlots } from '../features/schedules/api'
 import { SpecialtyListPage } from '../features/specialties/SpecialtyListPage'
 import { listSpecialties } from '../features/specialties/api'
-import type { Appointment, Doctor, MedicalRecord, Slot, Specialty } from '../types/domain'
+import type { Appointment, AvailableSlot, Doctor, MedicalRecord, Specialty } from '../types/domain'
 import { renderPage } from './render'
 
 vi.mock('../features/specialties/api', () => ({
@@ -48,12 +48,18 @@ const doctor: Doctor = {
   user: { id: '33333333-3333-4333-8333-333333333333', full_name: 'BS. Minh An', email: 'doctor@example.invalid', phone: null },
   specialty: { id: specialty.id, code: specialty.code, name: specialty.name },
 }
-const slot: Slot = {
+const slot: AvailableSlot = {
   id: '44444444-4444-4444-8444-444444444444', schedule_id: '55555555-5555-4555-8555-555555555555',
   start_at: '2030-01-15T01:00:00Z', end_at: '2030-01-15T01:30:00Z', status: 'AVAILABLE', created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z',
+  doctor_id: doctor.id, doctor_name: doctor.user.full_name,
+  specialty_id: specialty.id, specialty_name: specialty.name,
 }
 const appointment: Appointment = {
-  id: '66666666-6666-4666-8666-666666666666', patient_id: '77777777-7777-4777-8777-777777777777', schedule_slot_id: slot.id,
+  id: '66666666-6666-4666-8666-666666666666', reference_code: 'LH-66666666',
+  patient_id: '77777777-7777-4777-8777-777777777777', patient_name: 'Nguyễn Văn Bệnh nhân', schedule_slot_id: slot.id,
+  slot_start_at: slot.start_at, slot_end_at: slot.end_at,
+  doctor_id: doctor.id, doctor_name: doctor.user.full_name,
+  specialty_id: specialty.id, specialty_name: specialty.name,
   status: 'CONFIRMED', booked_at: '2026-10-20T01:00:00Z', cancelled_at: null, cancelled_by: null, cancellation_reason: null,
   completed_at: null, no_show_at: null, created_at: '2026-10-20T01:00:00Z', updated_at: '2026-10-20T01:00:00Z',
 }
@@ -63,11 +69,12 @@ const medicalRecord: MedicalRecord = {
   created_by: doctor.user_id, updated_by: doctor.user_id, created_at: '2026-10-20T01:00:00Z', updated_at: '2026-10-20T02:00:00Z',
 }
 
-function axiosError(status: number, detail: string) {
-  return Object.assign(new Error(detail), { isAxiosError: true, response: { status, data: { error: { code: 'test_error', detail } } } })
+function axiosError(status: number, detail: string, code = 'test_error') {
+  return Object.assign(new Error(detail), { isAxiosError: true, response: { status, data: { error: { code, detail } } } })
 }
 
 beforeEach(() => {
+  vi.clearAllMocks()
   window.localStorage.clear()
   vi.mocked(listSpecialties).mockResolvedValue([specialty])
   vi.mocked(listDoctors).mockResolvedValue([doctor])
@@ -93,15 +100,23 @@ describe('Phase 4 frontend core', () => {
   })
 
   it('shows available slots', async () => {
-    renderPage(<BookingPage />)
+    renderPage(<BookingPage />, `/booking?doctor=${doctor.id}`)
     expect(await screen.findByRole('button', { name: 'Chọn khung giờ' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'BS. Minh An' })).toBeInTheDocument()
+    expect(screen.getByText('Da liễu')).toBeInTheDocument()
     expect(listAvailableSlots).toHaveBeenCalled()
+  })
+
+  it('does not load every available slot before a search scope is selected', async () => {
+    renderPage(<BookingPage />)
+    expect(await screen.findByText('Chọn chuyên khoa hoặc bác sĩ')).toBeInTheDocument()
+    expect(listAvailableSlots).not.toHaveBeenCalled()
   })
 
   it('submits the booking form after explicit confirmation', async () => {
     const user = userEvent.setup()
     vi.mocked(createAppointment).mockResolvedValue(appointment)
-    renderPage(<BookingPage />)
+    renderPage(<BookingPage />, `/booking?doctor=${doctor.id}`)
     await user.click(await screen.findByRole('button', { name: 'Chọn khung giờ' }))
     await user.click(screen.getByLabelText(/Tôi đã kiểm tra/))
     await user.click(screen.getByRole('button', { name: 'Xác nhận đặt lịch' }))
@@ -111,12 +126,13 @@ describe('Phase 4 frontend core', () => {
 
   it('shows the backend 409 booking conflict', async () => {
     const user = userEvent.setup()
-    vi.mocked(createAppointment).mockRejectedValue(axiosError(409, 'Khung giờ vừa được người khác đặt.'))
-    renderPage(<BookingPage />)
+    vi.mocked(createAppointment).mockRejectedValue(axiosError(409, 'private database conflict', 'slot_occupied'))
+    renderPage(<BookingPage />, `/booking?doctor=${doctor.id}`)
     await user.click(await screen.findByRole('button', { name: 'Chọn khung giờ' }))
     await user.click(screen.getByLabelText(/Tôi đã kiểm tra/))
     await user.click(screen.getByRole('button', { name: 'Xác nhận đặt lịch' }))
-    expect(await screen.findByText('Khung giờ vừa được người khác đặt.')).toBeInTheDocument()
+    expect(await screen.findByText('Khung giờ này vừa được người khác đặt.')).toBeInTheDocument()
+    expect(screen.queryByText('private database conflict')).not.toBeInTheDocument()
   })
 
   it('cancels a patient appointment with a reason', async () => {
@@ -158,7 +174,7 @@ describe('Phase 4 frontend core', () => {
     renderPage(<PatientMedicalHistoryPage />)
     expect(await screen.findByText('Theo dõi sức khỏe')).toBeInTheDocument()
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
-    expect(screen.getByText(/Patient · Chỉ đọc/)).toBeInTheDocument()
+    expect(screen.getByText(/Dành cho người bệnh · Chỉ đọc/)).toBeInTheDocument()
   })
 
   it('shows a loading state while a query is pending', () => {
@@ -176,7 +192,7 @@ describe('Phase 4 frontend core', () => {
   it('shows a safe API error without a stack trace', async () => {
     vi.mocked(listSpecialties).mockRejectedValue(axiosError(403, 'Bạn không có quyền xem dữ liệu này.'))
     renderPage(<SpecialtyListPage />)
-    expect(await screen.findByText('Bạn không có quyền xem dữ liệu này.')).toBeInTheDocument()
+    expect(await screen.findByText('Bạn không có quyền thực hiện thao tác này.')).toBeInTheDocument()
     expect(screen.queryByText(/at .*\.tsx/)).not.toBeInTheDocument()
   })
 })

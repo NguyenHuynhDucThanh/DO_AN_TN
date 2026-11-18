@@ -48,6 +48,7 @@ describe('Phase 10 Risk Alert UI', () => {
     expect(await screen.findByLabelText('Cảnh báo an toàn khẩn cấp')).toBeInTheDocument()
     expect(screen.getByText(/không phải chẩn đoán/)).toBeInTheDocument()
     expect(screen.getByText(/đang chờ nhân viên tiếp nhận/)).toBeInTheDocument()
+    expect(screen.queryByText(/risk_handoff|11111111-1111-4111-8111-111111111111/)).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Xác nhận đặt lịch')).not.toBeInTheDocument()
   })
 

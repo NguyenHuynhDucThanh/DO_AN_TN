@@ -14,7 +14,6 @@ import {
   type ChatRequest,
   type ChatSource,
   type RiskAlert,
-  type ToolResult,
 } from './api'
 import { SpeakButton, VoiceControls } from './VoiceControls'
 
@@ -25,24 +24,11 @@ const chatSchema = z.object({
 type ChatForm = z.infer<typeof chatSchema>
 type UiChatMessage = ChatMessage & {
   sources?: ChatSource[]
-  toolResults?: ToolResult[]
   riskAlert?: RiskAlert | null
 }
 
-function toolItemLabel(item: unknown): string | null {
-  if (!item || typeof item !== 'object') return null
-  const value = item as Record<string, unknown>
-  if (typeof value.start_at === 'string') {
-    const time = new Date(value.start_at).toLocaleString('vi-VN', {
-      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-    })
-    return `${String(value.doctor_name ?? 'Bác sĩ')} · ${time} · Slot ${String(value.slot_id ?? '')}`
-  }
-  if (typeof value.full_name === 'string') {
-    return `${value.full_name}${typeof value.specialty_name === 'string' ? ` · ${value.specialty_name}` : ''}`
-  }
-  if (typeof value.name === 'string') return value.name
-  return null
+function appointmentReference(id: string) {
+  return `LH-${id.replaceAll('-', '').slice(0, 8).toUpperCase()}`
 }
 
 export function ChatPage() {
@@ -60,7 +46,6 @@ export function ChatPage() {
         role: 'assistant',
         content: response.answer,
         sources: response.sources,
-        toolResults: response.tool_results,
         riskAlert: response.risk_alert,
       }])
       setConfirmation(response.booking_confirmation ?? null)
@@ -72,7 +57,7 @@ export function ChatPage() {
       setConfirmation(null)
       setMessages((current) => [...current, {
         role: 'assistant',
-        content: `Đặt lịch thành công. Mã lịch hẹn: ${response.appointment_id}`,
+        content: `Đặt lịch thành công. Mã lịch hẹn: ${appointmentReference(response.appointment_id)}`,
       }])
     },
   })
@@ -98,9 +83,9 @@ export function ChatPage() {
   return (
     <Stack spacing={3} sx={{ maxWidth: 900, mx: 'auto' }}>
       <PageHeader
-        eyebrow="AI MVP + VOICE · PHASE 11"
+        eyebrow="Hỗ trợ sức khỏe"
         title="Chatbot thông tin sức khỏe"
-        description="AI MVP thống nhất: tra cứu nguồn đã duyệt, dữ liệu nghiệp vụ thật, xác nhận đặt lịch bắt buộc và cảnh báo an toàn dựa trên rule độc lập Gemini."
+        description="Hỏi thông tin sức khỏe phổ thông, tìm bác sĩ và lịch khám phù hợp. Bạn luôn được yêu cầu xác nhận trước khi đặt lịch."
       />
 
       <Alert severity="info">
@@ -152,25 +137,6 @@ export function ChatPage() {
                 ) : (
                   <Typography>{message.content}</Typography>
                 )}
-                {message.role === 'assistant' && message.toolResults && message.toolResults.length > 0 && (
-                  <Stack spacing={0.75} sx={{ mt: 1.5 }} aria-label="Kết quả công cụ">
-                    {message.toolResults.map((result, resultIndex) => (
-                      <Box key={`${result.name}-${resultIndex}`}>
-                        <Typography variant="caption">
-                          {result.name}: {result.status === 'SUCCESS' ? 'đã lấy dữ liệu thật' : 'cần xác nhận'}
-                          {typeof result.data.count === 'number' ? ` · ${result.data.count} kết quả` : ''}
-                        </Typography>
-                        {Array.isArray(result.data.items) && result.data.items.map((item, itemIndex) => {
-                          const label = toolItemLabel(item)
-                          return label ? <Typography key={itemIndex} variant="body2">• {label}</Typography> : null
-                        })}
-                        {Array.isArray(result.data.items) && result.data.items.length === 0 && (
-                          <Typography variant="body2">Không có kết quả phù hợp.</Typography>
-                        )}
-                      </Box>
-                    ))}
-                  </Stack>
-                )}
                 {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
                   <Stack spacing={0.75} sx={{ mt: 1.5 }} aria-label="Nguồn tham khảo">
                     <Typography variant="caption" sx={{ fontWeight: 700 }}>Nguồn tham khảo</Typography>
@@ -178,7 +144,6 @@ export function ChatPage() {
                       <Box key={`${source.document_id}-${source.article_id ?? source.page ?? sourceIndex}`}>
                     <Typography variant="caption" sx={{ display: 'block' }}>
                           {source.title ?? source.source_name ?? 'Tài liệu đã phê duyệt'}
-                          {source.category ? ` · ${source.category}` : ''}
                           {source.page ? ` · Trang ${source.page}` : ''}
                         </Typography>
                       </Box>
@@ -212,7 +177,6 @@ export function ChatPage() {
               {' – '}
               {new Date(confirmation.end_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
             </Typography>
-            <Typography variant="caption">Slot: {confirmation.slot_id}</Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
               <Button
                 variant="contained"
@@ -232,7 +196,7 @@ export function ChatPage() {
       {confirmMutation.error && (
         <Alert severity="error">
           {parseApiError(confirmMutation.error).status === 409
-            ? 'Slot này vừa được người khác đặt. Hãy yêu cầu chatbot tìm slot khác.'
+            ? 'Khung giờ này vừa được người khác đặt. Hãy yêu cầu chatbot tìm khung giờ khác.'
             : parseApiError(confirmMutation.error).message}
         </Alert>
       )}

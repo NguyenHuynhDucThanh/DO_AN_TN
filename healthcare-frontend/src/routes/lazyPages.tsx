@@ -15,6 +15,7 @@ export const PatientMedicalHistoryPage = lazy(() => import('../features/medical-
 export const MedicalRecordDetailPage = lazy(() => import('../features/medical-records/MedicalRecordDetailPage').then((module) => ({ default: module.MedicalRecordDetailPage })))
 export const DoctorMedicalRecordPage = lazy(() => import('../features/medical-records/DoctorMedicalRecordPage').then((module) => ({ default: module.DoctorMedicalRecordPage })))
 export const DoctorSchedulesPage = lazy(() => import('../features/schedules/DoctorSchedulesPage').then((module) => ({ default: module.DoctorSchedulesPage })))
+export const DoctorContributionsPage = lazy(() => import('../features/documents/DoctorContributionsPage').then((module) => ({ default: module.DoctorContributionsPage })))
 export const DocumentAdminPage = lazy(() => import('../features/documents/DocumentAdminPage').then((module) => ({ default: module.DocumentAdminPage })))
 export const HandoffPage = lazy(() => import('../features/handoffs/HandoffPage').then((module) => ({ default: module.HandoffPage })))
 export const ChatPage = lazy(() => import('../features/chat/ChatPage').then((module) => ({ default: module.ChatPage })))

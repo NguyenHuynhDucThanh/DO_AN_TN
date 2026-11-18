@@ -58,8 +58,8 @@ export function DoctorMedicalRecordPage() {
   if (record.isError && !notFound) return <ErrorState error={record.error} onRetry={() => void record.refetch()} />
   return (
     <>
-      <PageHeader eyebrow="Doctor · Dữ liệu lâm sàng" title={record.data ? 'Cập nhật hồ sơ khám' : 'Lập hồ sơ khám'} description="Backend kiểm tra Appointment đã COMPLETED và thuộc đúng bác sĩ trước khi lưu." />
-      <Alert severity="warning" sx={{ mb: 2 }}>Chỉ dùng dữ liệu synthetic/demo. Nội dung này không được đưa vào RAG hoặc Gemini.</Alert>
+      <PageHeader eyebrow="Dành cho bác sĩ" title={record.data ? 'Cập nhật hồ sơ khám' : 'Lập hồ sơ khám'} description="Ghi nhận kết quả sau khi hoàn thành buổi khám được phân công." />
+      <Alert severity="warning" sx={{ mb: 2 }}>Đây là thông tin riêng tư. Chỉ nhập dữ liệu phù hợp với phạm vi sử dụng của hệ thống.</Alert>
       <Card><CardContent sx={{ p: { xs: 3, md: 5 } }}>
         <form onSubmit={form.handleSubmit((values) => save.mutate(values))}>
           <Stack spacing={2.5}>

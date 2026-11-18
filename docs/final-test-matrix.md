@@ -1,21 +1,39 @@
 # Final Test Matrix
 
-Ngày chạy final regression: 02/11/2026. Môi trường: Windows development, PostgreSQL local thật, pgvector thật. External provider/hardware tests không bị mô tả như browser automation đầy đủ.
+Evidence lịch sử Phase 14 được chạy ngày 02/11/2026 và post-checkpoint workflow ngày 06/11/2026. Current final regression cho ENH-KB-001 được ghi nhận ngày 18/11/2026. Môi trường: Windows development, PostgreSQL local thật, pgvector thật. External provider/hardware tests không bị mô tả như browser automation đầy đủ.
+
+## Current final verification — ENH-KB-001
+
+| Area | Scope | Current result |
+| --- | --- | --- |
+| Backend full regression | PostgreSQL integration và toàn bộ application regression | **191 passed** |
+| Frontend full regression | Vitest/React Testing Library | **54 passed** |
+| Frontend KB-001C targeted | Doctor contribution + Admin review/ingest UI | **8 passed** |
+| Backend contribution/download targeted | upload, ownership, validation, safe download, compensation | **19 passed** |
+| Backend contribution + RAG integration | lifecycle, ingest, pgvector chunks, retrieval filter/assertion | **25 passed** |
+| Browser Golden Path + release suite | full non-AI workflow, KB-001C Golden Path và release smoke | **5/5 passed** |
+| Migration current/head | applied schema | `0005_document_contribution`; exactly one head |
+| Migration drift | model metadata vs DB | **PASS**, no new upgrade operations |
+| Static/release gates | ESLint, production build, compileall, pip check | **PASS** |
+
+Golden Path đã xác minh Doctor upload tài liệu synthetic, Admin reject kèm lý do, Doctor resubmit, Admin approve, tài liệu chưa retrievable trước ingest, sau đó ingest bằng BGE-M3 vào PostgreSQL/pgvector và retriever trả đúng marker/document id/title. Patient/Staff không quản lý corpus. Evidence này không yêu cầu live Gemini và không khẳng định full dataset 1 GB đã được ingest.
+
+## Historical Phase 14 and post-checkpoint evidence
 
 | Area | Scope | Command / evidence | Final result |
 | --- | --- | --- | --- |
-| Backend full regression | Unit + PostgreSQL integration, Auth, business, concurrency, MedicalRecord, Documents/RAG, AI/Tools/Risk, Handoff, Voice | `RUN_DB_INTEGRATION=1; python -m pytest` | **160/160 PASS** in 21.09s |
+| Backend full regression | Unit + PostgreSQL integration, Auth, business, concurrency, MedicalRecord, Documents/RAG, AI/Tools/Risk, Handoff, Voice, Doctor provisioning/Schedule workflow | `RUN_DB_INTEGRATION=1; python -m pytest` | **162/162 PASS** in 13.32s (06/11/2026) |
 | Python syntax | `app` + `scripts` | `python -m compileall -q app scripts` | **PASS** |
 | Python dependency consistency | installed environment | `python -m pip check` | **PASS**, no broken requirements |
 | Python vulnerability audit | pinned `requirements.txt` | `uvx pip-audit -r requirements.txt` | **PASS**, no known vulnerabilities |
-| Frontend component/unit | 7 Vitest files | `npm test` | **37/37 PASS** |
+| Frontend component/unit | 8 Vitest files | `npm test` | **41/41 PASS** (06/11/2026) |
 | Frontend static quality | source/config | `npm run lint` | **PASS**, 0 warnings |
 | Frontend production build | TypeScript + Vite | `npm run build` | **PASS**, largest JS 398.03 kB; no >500 kB warning |
-| Scoped browser smoke | Edge, real Backend/Frontend/PostgreSQL on ports 8013/5174 | `npm run test:e2e` | **3/3 PASS** in 12.9s |
+| Browser workflow + release smoke | Edge, real Backend/Frontend/PostgreSQL on ports 8013/5174; full non-AI multi-role golden path + scoped release smoke | `npm run test:e2e` | **4/4 PASS** in 58.5s (06/11/2026) |
 | Production npm dependency audit | runtime dependencies only | `npm audit --omit=dev --audit-level=moderate` | **PASS**, 0 vulnerabilities |
 | High-severity npm gate | all dependencies | `npm audit --audit-level=high` | **PASS**, no Critical/High open |
 | Development npm audit | ESLint/minimatch toolchain | `npm audit` | **12 MODERATE accepted**, production impact 0; no `--force` breaking downgrade |
-| Migration current/head | applied schema | `alembic current`; `alembic heads` | `0004_add_json_document_type (head)` |
+| Migration current/head | applied schema tại thời điểm Phase 14 | `alembic current`; `alembic heads` | `0004_add_json_document_type (head)` |
 | Migration drift | model metadata vs DB | `alembic check` | **PASS**, no new upgrade operations |
 | Database runtime | PostgreSQL/SQLAlchemy/pgvector/vector dimension/cosine | `scripts/check_database.py` | **PASS**: PostgreSQL 18.6, pgvector 0.8.7, Alembic 0004 |
 | Seed idempotency | synthetic demo seed twice | `scripts/seed_demo.py` ×2 | **PASS** both runs |
@@ -40,5 +58,5 @@ Ngày chạy final regression: 02/11/2026. Môi trường: Windows development, 
 
 ## Playwright scope boundary
 
-The 3 browser tests are a **scoped release smoke**, not full automation of multi-role mutations, live Gemini quota/network, WebSocket timing or physical microphone permission. Those areas have backend integration/component tests and historical/manual evidence, but are not claimed as full Playwright coverage.
+Current suite có full non-AI multi-role Business Golden Path, KB-001C Doctor contribution Golden Path và scoped release-smoke, tổng cộng 5/5. Suite không claim live Gemini provider, Voice/STT hardware, full 1 GB corpus hoặc exhaustive WebSocket timing automation; các phần này nằm ngoài verification scope hoặc có evidence riêng.
 

@@ -39,6 +39,13 @@ class ConflictError(ApplicationError):
         super().__init__(409, code, detail)
 
 
+class PayloadTooLargeError(ApplicationError):
+    def __init__(
+        self, detail: str = "The uploaded file is too large.", code: str = "file_too_large"
+    ) -> None:
+        super().__init__(413, code, detail)
+
+
 class TooManyRequestsError(ApplicationError):
     def __init__(
         self,

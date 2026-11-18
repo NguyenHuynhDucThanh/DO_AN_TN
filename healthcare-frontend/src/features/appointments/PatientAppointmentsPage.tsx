@@ -24,12 +24,22 @@ export function PatientAppointmentsPage() {
   })
   return (
     <>
-      <PageHeader eyebrow="Patient" title="Lịch hẹn của tôi" description="Lịch hẹn được giữ lại để truy vết ngay cả khi đã hủy." />
-      {query.isPending ? <LoadingState /> : query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : query.data.length === 0 ? <EmptyState title="Bạn chưa có lịch hẹn" description="Chọn một slot khả dụng để tạo lịch hẹn đầu tiên." /> : (
+      <PageHeader eyebrow="Dành cho người bệnh" title="Lịch hẹn của tôi" description="Theo dõi lịch sắp tới và những lịch đã hủy." />
+      {query.isPending ? <LoadingState /> : query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : query.data.length === 0 ? <EmptyState title="Bạn chưa có lịch hẹn" description="Tìm một khung giờ phù hợp để đặt lịch khám đầu tiên." /> : (
         <Stack spacing={2}>
           {query.data.map((appointment) => (
             <Card key={appointment.id}><CardContent><Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'space-between' }}>
-              <Stack spacing={0.75}><Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}><Typography variant="h3">Lịch hẹn</Typography><StatusChip value={appointment.status} /></Stack><Typography color="text.secondary">Đặt lúc {formatDateTime(appointment.booked_at)}</Typography><Typography variant="body2">Mã lịch hẹn: {appointment.id}</Typography><Typography variant="body2">Mã slot: {appointment.schedule_slot_id}</Typography>{appointment.cancellation_reason && <Alert severity="info">Lý do hủy: {appointment.cancellation_reason}</Alert>}</Stack>
+              <Stack spacing={0.75}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                  <Typography variant="h3">{appointment.reference_code}</Typography>
+                  <StatusChip value={appointment.status} />
+                </Stack>
+                <Typography><strong>Bác sĩ:</strong> {appointment.doctor_name}</Typography>
+                <Typography><strong>Chuyên khoa:</strong> {appointment.specialty_name}</Typography>
+                <Typography><strong>Thời gian khám:</strong> {formatDateTime(appointment.slot_start_at)} – {formatDateTime(appointment.slot_end_at)}</Typography>
+                <Typography variant="caption" color="text.secondary">Đặt lúc {formatDateTime(appointment.booked_at)}</Typography>
+                {appointment.cancellation_reason && <Alert severity="info">Lý do hủy: {appointment.cancellation_reason}</Alert>}
+              </Stack>
               {appointment.status === 'CONFIRMED' && <Button color="error" variant="outlined" onClick={() => setCancelId(appointment.id)} sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}>Hủy lịch</Button>}
             </Stack></CardContent></Card>
           ))}
@@ -38,7 +48,7 @@ export function PatientAppointmentsPage() {
       <Dialog open={Boolean(cancelId)} onClose={() => setCancelId(null)} fullWidth maxWidth="sm">
         <form onSubmit={form.handleSubmit((values) => cancellation.mutate(values))}>
           <DialogTitle>Xác nhận hủy lịch</DialogTitle>
-          <DialogContent><Stack spacing={2} sx={{ pt: 1 }}><Alert severity="warning">Hành động không xóa lịch hẹn; trạng thái sẽ chuyển sang CANCELLED.</Alert><TextField autoFocus fullWidth multiline minRows={3} label="Lý do hủy" {...form.register('reason')} error={Boolean(form.formState.errors.reason)} helperText={form.formState.errors.reason?.message} />{cancellation.isError && <ErrorState error={cancellation.error} />}</Stack></DialogContent>
+          <DialogContent><Stack spacing={2} sx={{ pt: 1 }}><Alert severity="warning">Lịch hẹn sau khi hủy vẫn được lưu trong lịch sử của bạn.</Alert><TextField autoFocus fullWidth multiline minRows={3} label="Lý do hủy" {...form.register('reason')} error={Boolean(form.formState.errors.reason)} helperText={form.formState.errors.reason?.message} />{cancellation.isError && <ErrorState error={cancellation.error} />}</Stack></DialogContent>
           <DialogActions><Button onClick={() => setCancelId(null)}>Giữ lịch</Button><Button type="submit" color="error" variant="contained" disabled={cancellation.isPending}>Xác nhận hủy</Button></DialogActions>
         </form>
       </Dialog>

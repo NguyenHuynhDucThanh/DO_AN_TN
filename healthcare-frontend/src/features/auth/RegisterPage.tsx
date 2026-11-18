@@ -41,7 +41,7 @@ export function RegisterPage() {
       <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
         <Stack component="form" spacing={2.5} onSubmit={form.handleSubmit(submit)}>
           <Stack spacing={0.75}>
-            <Typography variant="overline" color="primary">Tài khoản Patient</Typography>
+            <Typography variant="overline" color="primary">Tài khoản người bệnh</Typography>
             <Typography variant="h2">Đăng ký</Typography>
             <Typography color="text.secondary">Chỉ thu thập dữ liệu định danh và liên hệ tối thiểu. Hồ sơ khám không được nhập tại đây.</Typography>
           </Stack>

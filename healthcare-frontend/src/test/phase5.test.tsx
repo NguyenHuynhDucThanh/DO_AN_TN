@@ -35,10 +35,10 @@ const patient: AuthUser = {
   updated_at: '2026-10-21T00:00:00Z',
 }
 
-function axiosError(status: number, detail: string) {
+function axiosError(status: number, detail: string, code = 'test_error') {
   return Object.assign(new Error(detail), {
     isAxiosError: true,
-    response: { status, data: { error: { code: 'test_error', detail } } },
+    response: { status, data: { error: { code, detail } } },
   })
 }
 
@@ -133,13 +133,14 @@ describe('Phase 5 authentication frontend', () => {
   })
 
   it('shows safe 401 feedback and never renders a stack trace', async () => {
-    vi.mocked(login).mockRejectedValue(axiosError(401, 'Email hoặc mật khẩu không đúng.'))
+    vi.mocked(login).mockRejectedValue(axiosError(401, 'private authentication detail', 'invalid_credentials'))
     const user = userEvent.setup()
     renderAuth(<LoginPage />, { path: '/login' })
     await user.type(screen.getByLabelText('Email'), patient.email)
     await user.type(screen.getByLabelText('Mật khẩu'), 'WrongPass123')
     await user.click(screen.getByRole('button', { name: 'Đăng nhập' }))
     expect(await screen.findByText('Email hoặc mật khẩu không đúng.')).toBeInTheDocument()
+    expect(screen.queryByText('private authentication detail')).not.toBeInTheDocument()
     expect(screen.queryByText(/at .*\.tsx/)).not.toBeInTheDocument()
   })
 })

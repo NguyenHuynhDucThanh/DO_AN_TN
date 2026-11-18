@@ -43,14 +43,23 @@ def get_current_actor(
 
 
 def get_websocket_actor(websocket: WebSocket, db: Session) -> ActorContext:
-    """Authenticate a WebSocket from the same HttpOnly access cookie as REST."""
+    """Authenticate WebSocket by cookie, or an explicit development-only identity."""
     settings = get_settings()
     if websocket.headers.get("origin") != settings.frontend_origin:
         raise UnauthorizedError("The WebSocket origin is not allowed.", "invalid_origin")
     access_token = websocket.cookies.get(settings.access_cookie_name)
-    if access_token is None:
+    if access_token is not None:
+        user_id = decode_access_token(access_token, settings=settings)
+    elif settings.app_env != "production" and settings.dev_auth_enabled:
+        raw_dev_user_id = websocket.query_params.get("dev_user_id")
+        try:
+            user_id = UUID(raw_dev_user_id) if raw_dev_user_id else None
+        except ValueError:
+            user_id = None
+        if user_id is None:
+            raise UnauthorizedError()
+    else:
         raise UnauthorizedError()
-    user_id = decode_access_token(access_token, settings=settings)
     users = UserRepository(db)
     user = users.get(user_id)
     if user is None or user.status != UserStatus.ACTIVE:

@@ -74,14 +74,14 @@ export function VoiceControls({ onTranscript }: { onTranscript: (transcript: str
       }
       recorder.start()
       setState('recording')
-      setMessage('Đang ghi âm từ microphone của thiết bị…')
+      setMessage('Đang ghi âm…')
     } catch (error) {
       cleanupStream()
       setState('error')
       const denied = error instanceof DOMException && ['NotAllowedError', 'SecurityError'].includes(error.name)
       setMessage(denied
-        ? 'Quyền microphone đã bị từ chối. Hãy cấp quyền trong trình duyệt hoặc tiếp tục nhập văn bản.'
-        : 'Không tìm thấy hoặc không thể mở microphone. Bạn vẫn có thể nhập văn bản.')
+        ? 'Quyền sử dụng micrô đã bị từ chối. Hãy cấp quyền trong trình duyệt hoặc tiếp tục nhập văn bản.'
+        : 'Không tìm thấy hoặc không thể mở micrô. Bạn vẫn có thể nhập văn bản.')
     }
   }
 
@@ -100,7 +100,7 @@ export function VoiceControls({ onTranscript }: { onTranscript: (transcript: str
           <Button variant="contained" color="error" onClick={stop}>Dừng ghi âm</Button>
         )}
         {(state === 'requesting' || state === 'processing') && <CircularProgress size={20} />}
-        <Typography variant="caption">Push-to-talk tiếng Việt; audio chỉ dùng để nhận dạng và không được lưu lâu dài.</Typography>
+        <Typography variant="caption">Nhấn ghi âm và nói bằng tiếng Việt. Bản ghi chỉ dùng để chuyển thành văn bản và không được lưu lâu dài.</Typography>
       </Stack>
       {message && <Alert severity={state === 'error' ? 'error' : state === 'success' ? 'success' : 'info'}>{message}</Alert>}
     </Stack>
@@ -130,7 +130,7 @@ export function SpeakButton({ text }: { text: string }) {
     setSpeaking(false)
   }
 
-  if (!available) return <Typography variant="caption">TTS không khả dụng; nội dung văn bản vẫn hiển thị.</Typography>
+  if (!available) return <Typography variant="caption">Thiết bị không hỗ trợ đọc thành tiếng; nội dung văn bản vẫn hiển thị.</Typography>
   return speaking
     ? <Button size="small" onClick={stop}>Dừng đọc</Button>
     : <Button size="small" onClick={speak}>Đọc câu trả lời</Button>

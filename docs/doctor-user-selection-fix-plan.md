@@ -23,9 +23,7 @@ Tuy nhiên Frontend không có danh sách User phù hợp để Admin lựa ch�
 
 **Loại:** bug/UX fix bắt buộc sau Phase 14.
 
-Phạm vi fix này chỉ thay ô nhập UUID bằng lựa chọn có kiểm soát từ dữ liệu thật. Nó không bổ sung nghiệp vụ mới và không thay SRS.
-
-Việc cho Admin tạo hoàn toàn một tài khoản Doctor mới, đặt mật khẩu hoặc gửi lời mời kích hoạt là chức năng khác. Nếu cần thực hiện sau này, phải có Change Request riêng vì liên quan provisioning, password lifecycle và security.
+Phạm vi ban đầu chỉ thay ô nhập UUID bằng lựa chọn có kiểm soát từ dữ liệu thật. Ngày 06/11/2026, người dùng chốt bổ sung luôn luồng Admin tạo đồng thời tài khoản Doctor và Doctor profile. Luồng này dùng bảng/role/audit hiện có, không thay SRS và không tạo migration.
 
 ## 3. Giải pháp được chọn
 
@@ -131,24 +129,14 @@ Nếu candidate list rỗng:
 - hướng dẫn chạy seed/script provisioning User Doctor;
 - không yêu cầu Admin tự tìm UUID.
 
-## 6. Provisioning User Doctor ngoài phạm vi fix
+## 6. Provisioning User Doctor đã bổ sung
 
-Fix này không tạo tài khoản Doctor mới. User Doctor vẫn được chuẩn bị bằng seed hoặc công cụ quản trị có kiểm soát.
+Dialog hiện có hai chế độ:
 
-Trong phạm vi đồ án/demo:
+- mặc định: Admin nhập họ tên, email, số điện thoại, mật khẩu khởi tạo, chuyên khoa, mã hành nghề và tiểu sử; `POST /api/v1/doctors/provision` tạo User `ACTIVE`, gán role `DOCTOR` và tạo Doctor profile trong một transaction;
+- tùy chọn: liên kết một tài khoản Doctor `ACTIVE` chưa có profile từ dropdown candidates.
 
-- có thể bổ sung một User Doctor synthetic chưa có profile vào seed để demo dropdown;
-- password được đặt bằng prompt ẩn qua cơ chế hiện có;
-- không hard-code password vào source, report hoặc Git.
-
-Nếu muốn Admin tạo account Doctor trực tiếp trên UI, cần một Change Request riêng để quyết định:
-
-- email/phone validation;
-- initial password hay activation/invitation;
-- role assignment audit;
-- account ACTIVE/INACTIVE;
-- reset/rotation password;
-- notification và security policy.
+Mật khẩu được băm Argon2, không được log/audit hoặc lưu plaintext. Audit `DOCTOR_PROVISIONED` chỉ ghi các định danh cần thiết. Duplicate email/license hoặc lỗi giữa chừng đều rollback transaction. Không hard-code credential vào source, report hoặc Git.
 
 ## 7. Test plan
 
@@ -205,7 +193,7 @@ Playwright scoped smoke chỉ cần chạy lại nếu route/auth/API behavior d
 
 ## 9. Trạng thái
 
-**PLANNED — NOT IMPLEMENTED.**
+**DONE — 06/11/2026.**
 
-Không được đánh dấu DONE cho tới khi code và toàn bộ test bắt buộc đã chạy PASS.
+Backend full regression **162/162 PASS**; Frontend full regression **41/41 PASS**; lint và production build PASS. Không có schema change hoặc migration mới.
 

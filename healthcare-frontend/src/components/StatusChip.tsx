@@ -14,7 +14,8 @@ const labels: Record<string, string> = {
   RESOLVED: 'Đã giải quyết',
   APPROVED: 'Đã duyệt',
   REJECTED: 'Từ chối',
-  NOT_INGESTED: 'Chưa ingest',
+  INACTIVE: 'Ngừng hoạt động',
+  NOT_INGESTED: 'Chưa xử lý',
   PROCESSING: 'Đang xử lý',
   FAILED: 'Thất bại',
   NORMAL: 'Bình thường',
@@ -30,6 +31,6 @@ const colors: Record<string, ChipProps['color']> = {
   NO_SHOW: 'error', REJECTED: 'error', FAILED: 'error', URGENT: 'error',
 }
 
-export function StatusChip({ value }: { value: string }) {
-  return <Chip size="small" label={labels[value] ?? value} color={colors[value] ?? 'default'} />
+export function StatusChip({ value, label }: { value: string; label?: string }) {
+  return <Chip size="small" label={label ?? labels[value] ?? 'Không xác định'} color={colors[value] ?? 'default'} />
 }

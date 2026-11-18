@@ -10,7 +10,14 @@ from sqlalchemy.orm import Session
 from app.auth.context import ActorContext
 from app.auth.dependencies import get_current_actor
 from app.core.database import get_db
-from app.schedules.schemas import ScheduleCreate, ScheduleRead, ScheduleUpdate, SlotRead, SlotStatusUpdate
+from app.schedules.schemas import (
+    AvailableSlotRead,
+    ScheduleCreate,
+    ScheduleRead,
+    ScheduleUpdate,
+    SlotRead,
+    SlotStatusUpdate,
+)
 from app.schedules.service import ScheduleService
 
 router = APIRouter(prefix="/schedules", tags=["Schedules"])
@@ -23,15 +30,25 @@ def list_schedules(
     return ScheduleService(db).list(doctor_id)
 
 
-@router.get("/available-slots", response_model=list[SlotRead])
+@router.get("/available-slots", response_model=list[AvailableSlotRead])
 def list_available_slots(
     from_at: Annotated[datetime, Query()],
     to_at: Annotated[datetime, Query()],
     db: Annotated[Session, Depends(get_db)],
     doctor_id: Annotated[UUID | None, Query()] = None,
     specialty_id: Annotated[UUID | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
 ):
-    return ScheduleService(db).available_slots(from_at, to_at, doctor_id, specialty_id)
+    return ScheduleService(db).available_slots(from_at, to_at, doctor_id, specialty_id, limit)
+
+
+@router.get("/{schedule_id}/slots", response_model=list[SlotRead])
+def list_schedule_slots(
+    schedule_id: UUID,
+    db: Annotated[Session, Depends(get_db)],
+    actor: Annotated[ActorContext, Depends(get_current_actor)],
+):
+    return ScheduleService(db).list_slots(schedule_id, actor)
 
 
 @router.get("/{schedule_id}", response_model=ScheduleRead)

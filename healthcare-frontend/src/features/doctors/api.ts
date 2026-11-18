@@ -1,7 +1,11 @@
 import { apiClient } from '../../api/client'
-import type { Doctor } from '../../types/domain'
+import type { Doctor, DoctorCandidate, DoctorProvisionInput } from '../../types/domain'
 
-export const doctorKeys = { all: ['doctors'] as const, detail: (id: string) => ['doctors', id] as const }
+export const doctorKeys = {
+  all: ['doctors'] as const,
+  candidates: ['doctors', 'candidates'] as const,
+  detail: (id: string) => ['doctors', id] as const,
+}
 export async function listDoctors(specialtyId?: string, active?: boolean) {
   const { data } = await apiClient.get<Doctor[]>('/doctors', { params: { specialty_id: specialtyId || undefined, active } })
   return data
@@ -12,6 +16,14 @@ export async function getDoctor(id: string) {
 }
 export async function createDoctor(payload: { user_id: string; specialty_id: string; license_number: string; biography?: string }) {
   const { data } = await apiClient.post<Doctor>('/doctors', payload)
+  return data
+}
+export async function listDoctorCandidates() {
+  const { data } = await apiClient.get<DoctorCandidate[]>('/doctors/candidates')
+  return data
+}
+export async function provisionDoctor(payload: DoctorProvisionInput) {
+  const { data } = await apiClient.post<Doctor>('/doctors/provision', payload)
   return data
 }
 export async function updateDoctor(id: string, payload: { specialty_id?: string; license_number?: string; biography?: string; is_active?: boolean }) {

@@ -75,7 +75,7 @@ describe('Phase 11 push-to-talk and browser TTS', () => {
     getUserMedia.mockRejectedValue(new DOMException('denied', 'NotAllowedError'))
     renderPage(<ChatPage />)
     fireEvent.click(screen.getByRole('button', { name: 'Ghi âm' }))
-    expect(await screen.findByText(/Quyền microphone đã bị từ chối/)).toBeInTheDocument()
+    expect(await screen.findByText(/Quyền sử dụng micrô đã bị từ chối/)).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Tin nhắn'), { target: { value: 'Tôi vẫn nhập văn bản' } })
     expect(screen.getByLabelText('Tin nhắn')).toHaveValue('Tôi vẫn nhập văn bản')
   })
@@ -84,7 +84,7 @@ describe('Phase 11 push-to-talk and browser TTS', () => {
     getUserMedia.mockRejectedValue(new DOMException('missing', 'NotFoundError'))
     renderPage(<VoiceControls onTranscript={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Ghi âm' }))
-    expect(await screen.findByText(/Không tìm thấy hoặc không thể mở microphone/)).toBeInTheDocument()
+    expect(await screen.findByText(/Không tìm thấy hoặc không thể mở micrô/)).toBeInTheDocument()
   })
 
   it('falls back to text when the browser mediaDevices API is unavailable', () => {
@@ -129,7 +129,7 @@ describe('Phase 11 push-to-talk and browser TTS', () => {
     vi.stubGlobal('SpeechSynthesisUtterance', undefined)
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: undefined })
     renderPage(<SpeakButton text="Nội dung vẫn hiển thị" />)
-    expect(screen.getByText(/TTS không khả dụng/)).toBeInTheDocument()
+    expect(screen.getByText(/không hỗ trợ đọc thành tiếng/)).toBeInTheDocument()
   })
 })
 

@@ -20,6 +20,17 @@ export const apiClient = axios.create({
 export function websocketUrl(path: string) {
   const url = new URL(`${baseURL.replace(/\/$/, '')}/${path.replace(/^\//, '')}`)
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+  if (DEV_AUTH_ENABLED) {
+    const rawActor = window.localStorage.getItem(DEV_ACTOR_STORAGE_KEY)
+    if (rawActor) {
+      try {
+        const actor = JSON.parse(rawActor) as { userId?: string }
+        if (actor.userId) url.searchParams.set('dev_user_id', actor.userId)
+      } catch {
+        window.localStorage.removeItem(DEV_ACTOR_STORAGE_KEY)
+      }
+    }
+  }
   return url.toString()
 }
 

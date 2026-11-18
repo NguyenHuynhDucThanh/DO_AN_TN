@@ -8,7 +8,7 @@ export function RoleBoundary({ roles, children }: { roles: Role[]; children: Rea
   if (user?.roles.some((role) => roles.includes(role))) return children
   return (
     <Stack spacing={2}>
-      <Alert severity="warning">Tài khoản hiện tại không có quyền truy cập màn hình này. Backend vẫn là nơi quyết định quyền cuối cùng.</Alert>
+      <Alert severity="warning">Tài khoản hiện tại không có quyền truy cập màn hình này.</Alert>
       <Button component={RouterLink} to="/" variant="outlined" sx={{ alignSelf: 'flex-start' }}>Về trang chủ</Button>
     </Stack>
   )

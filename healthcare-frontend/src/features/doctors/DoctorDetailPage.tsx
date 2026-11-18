@@ -23,7 +23,7 @@ export function DoctorDetailPage() {
               <Typography color="text.secondary">Giấy phép hành nghề: {doctor.license_number}</Typography>
               <Divider />
               <Typography>{doctor.biography || 'Chưa có thông tin giới thiệu.'}</Typography>
-              <Typography variant="body2">Email: {doctor.user.email} · Điện thoại: {doctor.user.phone || 'Chưa cập nhật'}</Typography>
+              <Typography variant="body2" color="text.secondary">Đặt lịch và liên hệ với bác sĩ thông qua hệ thống.</Typography>
               <Button component={RouterLink} to={`/booking?doctor=${doctor.id}`} variant="contained" sx={{ alignSelf: 'flex-start' }}>Xem lịch trống</Button>
             </Stack>
           </Stack>

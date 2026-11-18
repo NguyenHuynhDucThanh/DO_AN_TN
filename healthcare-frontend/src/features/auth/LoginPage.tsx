@@ -37,13 +37,13 @@ export function LoginPage() {
           <Stack spacing={0.75}>
             <Typography variant="overline" color="primary">Tài khoản</Typography>
             <Typography variant="h2">Đăng nhập</Typography>
-            <Typography color="text.secondary">Phiên đăng nhập được bảo vệ bằng HttpOnly cookie; token không được lưu trong trình duyệt bằng JavaScript.</Typography>
+            <Typography color="text.secondary">Đăng nhập để sử dụng các chức năng phù hợp với tài khoản của bạn.</Typography>
           </Stack>
           {error && <Alert severity="error">{error}</Alert>}
           <TextField label="Email" type="email" autoComplete="email" {...form.register('email')} error={Boolean(form.formState.errors.email)} helperText={form.formState.errors.email?.message} />
           <TextField label="Mật khẩu" type="password" autoComplete="current-password" {...form.register('password')} error={Boolean(form.formState.errors.password)} helperText={form.formState.errors.password?.message} />
           <Button type="submit" variant="contained" size="large" disabled={form.formState.isSubmitting}>Đăng nhập</Button>
-          <Typography color="text.secondary">Chưa có tài khoản Patient? <Link component={RouterLink} to="/register">Đăng ký</Link></Typography>
+          <Typography color="text.secondary">Chưa có tài khoản? <Link component={RouterLink} to="/register">Đăng ký</Link></Typography>
         </Stack>
       </CardContent>
     </Card>

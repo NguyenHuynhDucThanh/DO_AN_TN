@@ -21,8 +21,9 @@ File này theo dõi các vấn đề được phát hiện trong quá trình ki�
 
 | ID | Vấn đề | Phân loại | Mức độ | Trạng thái |
 | --- | --- | --- | --- | --- |
-| ISSUE-001 | Admin phải nhập trực tiếp User UUID khi tạo Doctor profile | UX/Frontend–Backend integration gap | Medium | PLANNED — NOT IMPLEMENTED |
-| ISSUE-002 | Doctor không thể tạo/sửa/sinh slot trên UI; Patient không thấy lịch trống | Business workflow/Frontend integration gap | High cho demo | OPEN — NOT IMPLEMENTED |
+| ISSUE-001 | Admin phải nhập trực tiếp User UUID khi tạo Doctor profile | UX/Frontend–Backend integration gap | Medium | DONE — 06/11/2026 |
+| ISSUE-002 | Doctor không thể tạo/sửa/sinh slot trên UI; Patient không thấy lịch trống | Business workflow/Frontend integration gap | High cho demo | DONE — 06/11/2026 |
+| ENH-001 | Admin tạo đồng thời tài khoản User role DOCTOR và Doctor profile | Workflow extension được người dùng chốt | Medium | DONE — 06/11/2026 |
 
 ---
 
@@ -49,7 +50,7 @@ Backend data invariant đúng nhưng thiếu read API dành cho Admin để lấ
 
 Đây là UX/integration fix cho chức năng Doctor management hiện có, không viết lại Auth hoặc DoctorService và không cần migration.
 
-Việc cho Admin tạo hoàn toàn một tài khoản Doctor mới là chức năng khác, liên quan account provisioning/password/role audit và cần Change Request riêng.
+Sau khi xem xét phương án, người dùng đã quyết định bổ sung luôn luồng Admin tạo tài khoản Doctor mới và Doctor profile trong cùng Dialog. Phần mở rộng này dùng schema hiện có, không cần bảng hoặc migration mới.
 
 ### Phương án đã chốt
 
@@ -57,13 +58,14 @@ Chi tiết đầy đủ nằm trong `doctor-user-selection-fix-plan.md`.
 
 Tóm tắt:
 
-1. Thêm `GET /api/v1/doctors/candidates`, chỉ Admin.
+1. Đã thêm `GET /api/v1/doctors/candidates`, chỉ Admin.
 2. Chỉ trả User `ACTIVE`, có role `DOCTOR`, chưa có Doctor profile.
 3. Response chỉ chứa `id`, `full_name`, `email`, `phone` cần thiết.
-4. Thay ô UUID bằng dropdown `Họ tên — email`.
-5. Giữ `DoctorService.create()` làm nguồn validation cuối.
-6. Invalidate Doctor list và candidate query sau khi tạo.
-7. Không tạo migration, service/router/model trùng.
+4. Đã bỏ ô UUID và dùng dropdown `Họ tên — email` khi liên kết tài khoản có sẵn.
+5. Dialog mặc định cho phép tạo đồng thời User role `DOCTOR` và Doctor profile qua `POST /api/v1/doctors/provision`.
+6. Provisioning chạy trong một transaction, dùng Argon2, audit không chứa mật khẩu và rollback nếu có lỗi.
+7. Giữ validation Backend authoritative; invalidate Doctor list và candidate query sau mutation.
+8. Không tạo migration, service/router/model trùng.
 
 ### Test bắt buộc
 
@@ -76,7 +78,9 @@ Tóm tắt:
 
 ### Trạng thái
 
-**PLANNED — NOT IMPLEMENTED.**
+**DONE — 06/11/2026.**
+
+Implementation chính: `app/doctors/{schemas,repository,service,router}.py`, `src/features/doctors/{api,DoctorAdminPage}.tsx` và `src/types/domain.ts`.
 
 ---
 
@@ -108,7 +112,7 @@ Backend đã có:
 - `PATCH /api/v1/schedules/slots/{slot_id}/status` — block/unblock.
 - Kiểm tra future time, duration, overlap, advisory lock, Doctor ownership và booked-slot protection.
 
-Frontend hiện chỉ có:
+Frontend trước khi sửa chỉ có:
 
 - `GET /schedules`.
 - `GET /schedules/available-slots`.
@@ -124,7 +128,7 @@ ScheduleService và API mutation đã được triển khai, nhưng Frontend Pha
 
 Phải reuse `ScheduleService`, repository, router và database hiện có; không được viết lại concurrency/overlap logic.
 
-### Phương án xử lý đề xuất
+### Phương án đã triển khai
 
 #### Frontend
 
@@ -206,7 +210,31 @@ Chạy lại Backend full regression, Frontend test/lint/build và Playwright/re
 
 ### Trạng thái
 
-**OPEN — NOT IMPLEMENTED.**
+**DONE — 06/11/2026.**
+
+Doctor có thể tạo lịch tương lai, sửa lịch chưa có slot, hủy lịch, sinh slot và block/unblock slot phù hợp ngay trên UI. Backend được mở rộng tối thiểu bằng endpoint bảo vệ `GET /api/v1/schedules/{schedule_id}/slots`; toàn bộ overlap lock, ownership và business rules hiện có tiếp tục được reuse.
+
+## Bằng chứng kiểm thử sau khi sửa
+
+| Gate | Kết quả |
+| --- | --- |
+| Backend test tập trung Doctor/Schedule/HTTP contract | **12/12 PASS** |
+| Backend full regression với PostgreSQL thật | **162/162 PASS** |
+| Frontend workflow tests mới | **4/4 PASS** |
+| Frontend full regression | **41/41 PASS** (8 files) |
+| Frontend ESLint | **PASS**, 0 warning |
+| Frontend production build | **PASS**, largest JS khoảng 398.03 kB |
+
+Không có thay đổi schema và không tạo migration mới. Các integration test dùng savepoint/rollback, không để lại dữ liệu thử trong database demo.
+
+## Post-Phase-14 workflow verification — 06/11/2026
+
+- ISSUE-001: **VERIFIED DONE** bằng browser — Admin link candidate bằng tên/email, không raw UUID; candidate biến mất sau create.
+- ENH-001: **VERIFIED DONE** bằng browser + PostgreSQL — provision Doctor, login thật, Argon2, role/profile/audit đúng.
+- ISSUE-002: **VERIFIED DONE** bằng browser — create/update Schedule, generate/block slot, Patient discovery/booking.
+- Business Golden Path: **PASS**; Business Workflow Readiness: **READY**.
+- Hai gap UI mới `POST14-WF-01/02` được sửa tối thiểu và regression PASS; chi tiết trong `post-phase14-business-workflow-verification.md`.
+- Final gates: Backend 162/162; Frontend 41/41; Playwright 4/4; lint/build/Alembic PASS.
 
 ---
 

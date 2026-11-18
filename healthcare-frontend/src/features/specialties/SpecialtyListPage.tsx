@@ -20,7 +20,6 @@ export function SpecialtyListPage() {
                 <CardActionArea component={RouterLink} to={`/specialties/${specialty.id}`} sx={{ height: '100%' }}>
                   <CardContent sx={{ p: 3 }}>
                     <Stack spacing={1.5}>
-                      <Typography variant="overline" color="primary">{specialty.code}</Typography>
                       <Typography variant="h3">{specialty.name}</Typography>
                       <Typography color="text.secondary">{specialty.description || 'Chưa có mô tả.'}</Typography>
                     </Stack>
