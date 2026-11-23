@@ -15,13 +15,15 @@ export function MedicalRecordDetailPage() {
   return (
     <>
       <PageHeader eyebrow="Hồ sơ khám · Chỉ đọc" title="Kết quả khám" description={`Cập nhật lần cuối ${formatDateTime(record.updated_at)}`} />
-      <Alert severity="info" sx={{ mb: 2 }}>Đây là thông tin khám bệnh riêng tư và chỉ được hiển thị ở chế độ đọc.</Alert>
-      <Card><CardContent sx={{ p: { xs: 3, md: 5 } }}><Stack spacing={3} divider={<Divider flexItem />}>
+      <Stack spacing={2} sx={{ maxWidth: 960 }}>
+      <Alert severity="info">Đây là thông tin khám bệnh riêng tư và chỉ được hiển thị ở chế độ đọc.</Alert>
+      <Card><CardContent sx={{ p: { xs: 3, md: 4 } }}><Stack spacing={3} divider={<Divider flexItem />}>
         <Stack spacing={1}><Typography variant="overline" color="primary">Triệu chứng ghi nhận</Typography><Typography sx={{ whiteSpace: 'pre-wrap' }}>{record.symptoms}</Typography></Stack>
         <Stack spacing={1}><Typography variant="overline" color="primary">Ghi chú khám</Typography><Typography sx={{ whiteSpace: 'pre-wrap' }}>{record.clinical_notes}</Typography></Stack>
         <Stack spacing={1}><Typography variant="overline" color="primary">Kết luận của bác sĩ</Typography><Typography sx={{ whiteSpace: 'pre-wrap' }}>{record.doctor_conclusion}</Typography></Stack>
         <Stack spacing={1}><Typography variant="overline" color="primary">Hướng dẫn sau khám</Typography><Typography sx={{ whiteSpace: 'pre-wrap' }}>{record.follow_up_instructions}</Typography></Stack>
       </Stack></CardContent></Card>
+      </Stack>
     </>
   )
 }

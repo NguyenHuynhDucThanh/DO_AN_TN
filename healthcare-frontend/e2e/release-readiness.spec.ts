@@ -6,7 +6,7 @@ test('public business discovery and Backend health work end to end', async ({ pa
   expect(await health.json()).toMatchObject({ status: 'ok' })
 
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Chăm sóc sức khỏe bắt đầu từ thông tin rõ ràng.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Chăm sóc sức khỏe bắt đầu từ thông tin rõ ràng' })).toBeVisible()
 
   await page.goto('/specialties')
   await expect(page.getByRole('heading', { name: 'Chuyên khoa', exact: true })).toBeVisible()

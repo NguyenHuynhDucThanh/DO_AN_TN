@@ -40,6 +40,7 @@ function toLocalInput(iso: string) {
 
 function ScheduleCard({ schedule, onEdit }: { schedule: Schedule; onEdit: (schedule: Schedule) => void }) {
   const client = useQueryClient()
+  const [cancelOpen, setCancelOpen] = useState(false)
   const slots = useQuery({ queryKey: scheduleKeys.slots(schedule.id), queryFn: () => listScheduleSlots(schedule.id) })
   const refresh = async () => {
     await Promise.all([
@@ -50,10 +51,10 @@ function ScheduleCard({ schedule, onEdit }: { schedule: Schedule; onEdit: (sched
   }
   const generate = useMutation({ mutationFn: () => generateSlots(schedule.id), onSuccess: refresh })
   const changeSlot = useMutation({ mutationFn: ({ id, blocked }: { id: string; blocked: boolean }) => setSlotStatus(id, blocked), onSuccess: refresh })
-  const cancel = useMutation({ mutationFn: () => updateSchedule(schedule.id, { status: 'CANCELLED' }), onSuccess: refresh })
+  const cancel = useMutation({ mutationFn: () => updateSchedule(schedule.id, { status: 'CANCELLED' }), onSuccess: async () => { setCancelOpen(false); await refresh() } })
   const error = generate.error ?? changeSlot.error ?? cancel.error
   const isActive = schedule.status === 'ACTIVE'
-  return (
+  return <>
     <Card><CardContent><Stack spacing={2}>
       <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', gap: 2 }}>
         <Stack><Typography variant="h3">{formatDateTime(schedule.start_at)}</Typography><Typography color="text.secondary">Kết thúc {formatDateTime(schedule.end_at)} · {schedule.slot_duration_minutes} phút/khung giờ</Typography></Stack>
@@ -68,10 +69,15 @@ function ScheduleCard({ schedule, onEdit }: { schedule: Schedule; onEdit: (sched
       {isActive && <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap' }}>
         {slots.data?.length === 0 && <Button variant="contained" onClick={() => generate.mutate()} disabled={generate.isPending}>{generate.isPending ? 'Đang tạo…' : 'Tạo khung giờ'}</Button>}
         {slots.data?.length === 0 && <Button onClick={() => onEdit(schedule)}>Chỉnh sửa lịch</Button>}
-        <Button color="error" onClick={() => { if (window.confirm('Hủy lịch làm việc này?')) cancel.mutate() }} disabled={cancel.isPending}>Hủy lịch</Button>
+        <Button color="error" variant="outlined" onClick={() => setCancelOpen(true)} disabled={cancel.isPending}>Hủy lịch</Button>
       </Stack>}
     </Stack></CardContent></Card>
-  )
+    <Dialog open={cancelOpen} onClose={() => setCancelOpen(false)} fullWidth maxWidth="xs">
+      <DialogTitle>Hủy lịch làm việc?</DialogTitle>
+      <DialogContent><Typography color="text.secondary">Các khung giờ còn trống của lịch này sẽ tạm khóa và người bệnh không thể đặt mới.</Typography></DialogContent>
+      <DialogActions><Button onClick={() => setCancelOpen(false)}>Giữ lịch</Button><Button color="error" variant="contained" onClick={() => cancel.mutate()} disabled={cancel.isPending}>{cancel.isPending ? 'Đang hủy…' : 'Xác nhận hủy'}</Button></DialogActions>
+    </Dialog>
+  </>
 }
 
 function ScheduleDialog({ doctorId, editing, onClose }: { doctorId: string; editing: Schedule | 'new'; onClose: () => void }) {
@@ -88,7 +94,7 @@ function ScheduleDialog({ doctorId, editing, onClose }: { doctorId: string; edit
     },
     onSuccess: async () => { await client.invalidateQueries({ queryKey: scheduleKeys.all }); onClose() },
   })
-  return <Dialog open onClose={onClose} fullWidth maxWidth="sm"><form onSubmit={form.handleSubmit((values) => save.mutate(values))}><DialogTitle>{editing === 'new' ? 'Tạo lịch làm việc' : 'Chỉnh sửa lịch làm việc'}</DialogTitle><DialogContent><Stack spacing={2} sx={{ pt: 1 }}>{save.isError && <ErrorState error={save.error} />}<TextField label="Bắt đầu" type="datetime-local" slotProps={{ inputLabel: { shrink: true } }} {...form.register('start_at')} error={Boolean(form.formState.errors.start_at)} helperText={form.formState.errors.start_at?.message} /><TextField label="Kết thúc" type="datetime-local" slotProps={{ inputLabel: { shrink: true } }} {...form.register('end_at')} error={Boolean(form.formState.errors.end_at)} helperText={form.formState.errors.end_at?.message} /><TextField label="Thời lượng mỗi khung giờ (phút)" type="number" {...form.register('slot_duration_minutes', { valueAsNumber: true })} error={Boolean(form.formState.errors.slot_duration_minutes)} helperText={form.formState.errors.slot_duration_minutes?.message} /></Stack></DialogContent><DialogActions><Button onClick={onClose}>Đóng</Button><Button type="submit" variant="contained" disabled={save.isPending}>{save.isPending ? 'Đang lưu…' : 'Lưu'}</Button></DialogActions></form></Dialog>
+  return <Dialog open onClose={onClose} fullWidth maxWidth="sm"><form onSubmit={form.handleSubmit((values) => save.mutate(values))}><DialogTitle>{editing === 'new' ? 'Tạo lịch làm việc' : 'Chỉnh sửa lịch làm việc'}</DialogTitle><DialogContent><Stack spacing={2} sx={{ pt: 1 }}>{save.isError && <ErrorState error={save.error} />}<TextField label="Bắt đầu" type="datetime-local" slotProps={{ inputLabel: { shrink: true } }} {...form.register('start_at')} error={Boolean(form.formState.errors.start_at)} helperText={form.formState.errors.start_at?.message} /><TextField label="Kết thúc" type="datetime-local" slotProps={{ inputLabel: { shrink: true } }} {...form.register('end_at')} error={Boolean(form.formState.errors.end_at)} helperText={form.formState.errors.end_at?.message} /><TextField label="Thời lượng mỗi khung giờ (phút)" type="number" {...form.register('slot_duration_minutes', { valueAsNumber: true })} error={Boolean(form.formState.errors.slot_duration_minutes)} helperText={form.formState.errors.slot_duration_minutes?.message} /></Stack></DialogContent><DialogActions><Button onClick={onClose}>Hủy</Button><Button type="submit" variant="contained" disabled={save.isPending}>{save.isPending ? 'Đang lưu…' : 'Lưu'}</Button></DialogActions></form></Dialog>
 }
 
 export function DoctorSchedulesPage() {
@@ -100,7 +106,7 @@ export function DoctorSchedulesPage() {
   return (
     <>
       <PageHeader eyebrow="Dành cho bác sĩ" title="Lịch làm việc" description="Tạo lịch và quản lý các khung giờ để người bệnh có thể đặt khám." action={doctor ? <Button variant="contained" onClick={() => setEditing('new')}>Tạo lịch</Button> : undefined} />
-      {!user && <Alert severity="warning">Vui lòng đăng nhập bằng tài khoản bác sĩ.</Alert>}
+      {!user && <Alert severity="warning" sx={{ mb: 3 }}>Vui lòng đăng nhập bằng tài khoản bác sĩ.</Alert>}
       {doctors.isPending || (doctor && schedules.isPending) ? <LoadingState /> : doctors.isError ? <ErrorState error={doctors.error} /> : !doctor ? <EmptyState title="Không tìm thấy hồ sơ bác sĩ" description="Tài khoản đang đăng nhập chưa liên kết với hồ sơ bác sĩ đang hoạt động." /> : schedules.isError ? <ErrorState error={schedules.error} onRetry={() => void schedules.refetch()} /> : !schedules.data?.length ? <EmptyState title="Chưa có lịch làm việc" description="Bấm Tạo lịch để thêm lịch làm việc và tạo các khung giờ khám." /> : <Grid container spacing={2}>{schedules.data.map((schedule) => <Grid key={schedule.id} size={{ xs: 12, lg: 6 }}><ScheduleCard schedule={schedule} onEdit={setEditing} /></Grid>)}</Grid>}
       {doctor && editing && <ScheduleDialog doctorId={doctor.id} editing={editing} onClose={() => setEditing(null)} />}
     </>

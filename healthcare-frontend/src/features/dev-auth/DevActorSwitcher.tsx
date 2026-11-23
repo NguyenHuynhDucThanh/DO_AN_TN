@@ -5,7 +5,7 @@ import type { Role } from '../../types/domain'
 import { useDevActor } from './DevActorContext'
 
 const roleLabels: Record<Role, string> = {
-  PATIENT: 'Patient', DOCTOR: 'Doctor', STAFF: 'Staff', ADMIN: 'Admin',
+  PATIENT: 'Người bệnh', DOCTOR: 'Bác sĩ', STAFF: 'Nhân viên hỗ trợ', ADMIN: 'Quản trị viên',
 }
 
 export function DevActorSwitcher() {
@@ -28,31 +28,31 @@ export function DevActorSwitcher() {
   return (
     <>
       <Button color="inherit" variant="outlined" onClick={() => setOpen(true)} sx={{ borderColor: 'rgba(255,255,255,.5)' }}>
-        DEV · {roleLabels[actor.role]}
+        Tài khoản thử · {roleLabels[actor.role]}
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Danh tính nội bộ development/test</DialogTitle>
+        <DialogTitle>Chọn tài khoản thử nghiệm</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Alert severity="warning">
-              Chỉ dùng trong development/test. Backend xác minh UUID và role thật trong PostgreSQL; đây không phải đăng nhập production.
+              Công cụ này chỉ xuất hiện trong môi trường phát triển để kiểm tra giao diện theo từng vai trò.
             </Alert>
             <TextField select label="Vai trò giao diện" value={draftRole} onChange={(event) => changeRole(event.target.value as Role)}>
               {(Object.keys(roleLabels) as Role[]).map((role) => <MenuItem key={role} value={role}>{roleLabels[role]}</MenuItem>)}
             </TextField>
             <TextField
-              label="UUID người dùng demo"
+              label="Mã tài khoản thử nghiệm"
               value={draftId}
               onChange={(event) => setDraftId(event.target.value)}
-              placeholder="Lấy từ users.id trong PostgreSQL"
-              helperText="Có thể cấu hình sẵn bằng VITE_DEV_PATIENT_ID, VITE_DEV_DOCTOR_ID, VITE_DEV_STAFF_ID và VITE_DEV_ADMIN_ID."
+              placeholder="Nhập mã tài khoản đã được cấu hình"
+              helperText="Mỗi vai trò cần liên kết với một tài khoản thử nghiệm hợp lệ."
             />
-            {!draftId && <Typography color="error.main" variant="body2">Endpoint được bảo vệ sẽ trả 401 cho tới khi có UUID hợp lệ.</Typography>}
+            {!draftId && <Typography color="error.main" variant="body2">Chưa có tài khoản thử nghiệm cho vai trò này.</Typography>}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Đóng</Button>
-          <Button variant="contained" onClick={save}>Dùng danh tính này</Button>
+          <Button onClick={() => setOpen(false)}>Hủy</Button>
+          <Button variant="contained" onClick={save}>Chọn tài khoản</Button>
         </DialogActions>
       </Dialog>
     </>

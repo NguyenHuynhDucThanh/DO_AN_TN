@@ -9,6 +9,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { EmptyState, ErrorState, LoadingState } from '../../components/AsyncState'
 import { PageHeader } from '../../components/PageHeader'
+import { StatusChip } from '../../components/StatusChip'
 import type { Doctor } from '../../types/domain'
 import { listSpecialties, specialtyKeys } from '../specialties/api'
 import {
@@ -70,21 +71,22 @@ export function DoctorAdminPage() {
       <PageHeader eyebrow="Quản trị" title="Quản lý bác sĩ" description="Tạo tài khoản, lập hồ sơ bác sĩ hoặc liên kết một tài khoản bác sĩ có sẵn." action={<Button variant="contained" onClick={() => setEditing('new')}>Thêm bác sĩ</Button>} />
       {save.isError && <ErrorState error={save.error} />}
       {query.isPending ? <LoadingState /> : query.isError ? <ErrorState error={query.error} /> : query.data.length === 0 ? <EmptyState title="Chưa có bác sĩ" description="Bấm Thêm bác sĩ để tạo tài khoản và hồ sơ bác sĩ." /> : (
-        <Stack spacing={1.5}>{query.data.map((item) => <Card key={item.id}><CardContent><Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between' }}><Stack><Typography variant="h3">{item.user.full_name}</Typography><Typography color="primary">{item.specialty.name}</Typography><Typography color="text.secondary">{item.license_number} · {item.is_active ? 'Đang hoạt động' : 'Đã tắt'}</Typography></Stack><Button onClick={() => setEditing(item)}>Chỉnh sửa</Button></Stack></CardContent></Card>)}</Stack>
+        <Stack spacing={1.25}>{query.data.map((item) => <Card key={item.id}><CardContent><Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}><Stack spacing={0.5}><Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}><Typography variant="h3">{item.user.full_name}</Typography><StatusChip value={item.is_active ? 'ACTIVE' : 'INACTIVE'} /></Stack><Typography color="primary.dark" sx={{ fontWeight: 650 }}>{item.specialty.name}</Typography><Typography variant="body2" color="text.secondary">Giấy phép hành nghề: {item.license_number}</Typography></Stack><Button variant="outlined" onClick={() => setEditing(item)}>Chỉnh sửa</Button></Stack></CardContent></Card>)}</Stack>
       )}
-      <Dialog open={Boolean(editing)} onClose={() => setEditing(null)} fullWidth maxWidth="sm">
+      <Dialog open={Boolean(editing)} onClose={() => setEditing(null)} fullWidth maxWidth="md">
         <form onSubmit={form.handleSubmit((values) => save.mutate(values))}>
           <DialogTitle>{isCreating ? 'Thêm bác sĩ' : 'Cập nhật bác sĩ'}</DialogTitle>
           <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
-            {isCreating && <Controller name="account_mode" control={form.control} render={({ field }) => <TextField select label="Tài khoản" {...field}><MenuItem value="NEW">Tạo tài khoản bác sĩ mới</MenuItem><MenuItem value="EXISTING">Dùng tài khoản bác sĩ có sẵn</MenuItem></TextField>} />}
+            {isCreating && <><Typography variant="h4">Thông tin tài khoản</Typography><Controller name="account_mode" control={form.control} render={({ field }) => <TextField select label="Tài khoản" {...field}><MenuItem value="NEW">Tạo tài khoản bác sĩ mới</MenuItem><MenuItem value="EXISTING">Dùng tài khoản bác sĩ có sẵn</MenuItem></TextField>} /></>}
             {isCreating && accountMode === 'NEW' && <><TextField label="Họ và tên" {...form.register('full_name')} error={Boolean(form.formState.errors.full_name)} helperText={form.formState.errors.full_name?.message} /><TextField label="Email" type="email" {...form.register('email')} error={Boolean(form.formState.errors.email)} helperText={form.formState.errors.email?.message} /><TextField label="Số điện thoại" {...form.register('phone')} error={Boolean(form.formState.errors.phone)} helperText={form.formState.errors.phone?.message} /><TextField label="Mật khẩu tạm thời" type="password" autoComplete="new-password" {...form.register('password')} error={Boolean(form.formState.errors.password)} helperText={form.formState.errors.password?.message} /><TextField label="Xác nhận mật khẩu" type="password" autoComplete="new-password" {...form.register('confirm_password')} error={Boolean(form.formState.errors.confirm_password)} helperText={form.formState.errors.confirm_password?.message} /></>}
             {isCreating && accountMode === 'EXISTING' && <>{candidates.isError && <ErrorState error={candidates.error} onRetry={() => void candidates.refetch()} />}{candidates.data?.length === 0 && <Alert severity="info">Không có tài khoản bác sĩ nào chưa được gắn hồ sơ.</Alert>}<Controller name="user_id" control={form.control} render={({ field }) => <TextField select label="Tài khoản bác sĩ" disabled={candidates.isPending || candidates.isError || candidates.data?.length === 0} {...field} error={Boolean(form.formState.errors.user_id)} helperText={candidates.isPending ? 'Đang tải tài khoản…' : form.formState.errors.user_id?.message}>{(candidates.data ?? []).map((item) => <MenuItem key={item.id} value={item.id}>{item.full_name} — {item.email}</MenuItem>)}</TextField>} /></>}
+            <Typography variant="h4" sx={{ pt: 1 }}>Hồ sơ chuyên môn</Typography>
             <Controller name="specialty_id" control={form.control} render={({ field }) => <TextField select label="Chuyên khoa" {...field} error={Boolean(form.formState.errors.specialty_id)} helperText={form.formState.errors.specialty_id?.message}>{(specialties.data ?? []).map((item) => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>)}</TextField>} />
             <TextField label="Số giấy phép" {...form.register('license_number')} error={Boolean(form.formState.errors.license_number)} helperText={form.formState.errors.license_number?.message} />
             <TextField label="Giới thiệu" multiline minRows={3} {...form.register('biography')} />
             {!isCreating && <Controller name="is_active" control={form.control} render={({ field }) => <FormControlLabel control={<Switch checked={field.value} onChange={(_, checked) => field.onChange(checked)} />} label="Đang hoạt động" />} />}
           </Stack></DialogContent>
-          <DialogActions><Button onClick={() => setEditing(null)}>Đóng</Button><Button type="submit" variant="contained" disabled={save.isPending}>{save.isPending ? 'Đang lưu…' : 'Lưu'}</Button></DialogActions>
+          <DialogActions><Button onClick={() => setEditing(null)}>Hủy</Button><Button type="submit" variant="contained" disabled={save.isPending}>{save.isPending ? 'Đang lưu…' : 'Lưu'}</Button></DialogActions>
         </form>
       </Dialog>
     </>

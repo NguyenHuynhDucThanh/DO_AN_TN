@@ -90,7 +90,7 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
         {fileError && <Alert severity="error">{fileError}</Alert>}
         <MetadataFields form={form} />
       </Stack></DialogContent>
-      <DialogActions><Button onClick={onClose} disabled={upload.isPending}>Đóng</Button><Button type="submit" variant="contained" disabled={upload.isPending}>{upload.isPending ? 'Đang tải lên…' : 'Gửi tài liệu'}</Button></DialogActions>
+      <DialogActions><Button onClick={onClose} disabled={upload.isPending}>Hủy</Button><Button type="submit" variant="contained" disabled={upload.isPending}>{upload.isPending ? 'Đang tải lên…' : 'Gửi tài liệu'}</Button></DialogActions>
     </form>
   </Dialog>
 }
@@ -121,7 +121,7 @@ function EditDialog({ document, onClose }: { document: DocumentContribution; onC
   return <Dialog open onClose={update.isPending ? undefined : onClose} fullWidth maxWidth="sm"><form onSubmit={form.handleSubmit((values) => update.mutate(values))}>
     <DialogTitle>{document.approval_status === 'REJECTED' ? 'Chỉnh sửa và gửi lại' : 'Chỉnh sửa thông tin'}</DialogTitle>
     <DialogContent><Stack spacing={2}>{document.rejection_reason && <Alert severity="warning">Lý do từ chối: {document.rejection_reason}</Alert>}{update.isError && <ErrorState error={update.error} />}<MetadataFields form={form} /></Stack></DialogContent>
-    <DialogActions><Button onClick={onClose} disabled={update.isPending}>Đóng</Button><Button type="submit" variant="contained" disabled={update.isPending}>{update.isPending ? 'Đang lưu…' : document.approval_status === 'REJECTED' ? 'Gửi lại' : 'Lưu'}</Button></DialogActions>
+    <DialogActions><Button onClick={onClose} disabled={update.isPending}>Hủy</Button><Button type="submit" variant="contained" disabled={update.isPending}>{update.isPending ? 'Đang lưu…' : document.approval_status === 'REJECTED' ? 'Gửi lại' : 'Lưu'}</Button></DialogActions>
   </form></Dialog>
 }
 
@@ -140,7 +140,7 @@ export function DoctorContributionsPage() {
       {item.publication_year && <Typography variant="body2">Năm xuất bản: {item.publication_year}</Typography>}
       <Typography variant="body2">Ngày gửi: {formatDateTime(item.created_at)}</Typography>
       {item.rejection_reason && <Alert severity="warning">Lý do từ chối: {item.rejection_reason}</Alert>}
-      {['PENDING', 'REJECTED'].includes(item.approval_status) && <Button sx={{ alignSelf: 'flex-start' }} onClick={() => setEditing(item)}>{item.approval_status === 'REJECTED' ? 'Chỉnh sửa và gửi lại' : 'Chỉnh sửa thông tin'}</Button>}
+      {['PENDING', 'REJECTED'].includes(item.approval_status) && <Button variant="outlined" size="small" sx={{ alignSelf: 'flex-start' }} onClick={() => setEditing(item)}>{item.approval_status === 'REJECTED' ? 'Chỉnh sửa và gửi lại' : 'Chỉnh sửa thông tin'}</Button>}
     </Stack></CardContent></Card></Grid>)}</Grid>}
     {uploadOpen && <UploadDialog onClose={() => setUploadOpen(false)} />}
     {editing && <EditDialog document={editing} onClose={() => setEditing(null)} />}

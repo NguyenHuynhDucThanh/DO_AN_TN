@@ -100,7 +100,7 @@ export function VoiceControls({ onTranscript }: { onTranscript: (transcript: str
           <Button variant="contained" color="error" onClick={stop}>Dừng ghi âm</Button>
         )}
         {(state === 'requesting' || state === 'processing') && <CircularProgress size={20} />}
-        <Typography variant="caption">Nhấn ghi âm và nói bằng tiếng Việt. Bản ghi chỉ dùng để chuyển thành văn bản và không được lưu lâu dài.</Typography>
+        <Typography variant="caption" color="text.secondary">Nhấn ghi âm và nói bằng tiếng Việt. Bạn có thể sửa nội dung nhận dạng trước khi gửi.</Typography>
       </Stack>
       {message && <Alert severity={state === 'error' ? 'error' : state === 'success' ? 'success' : 'info'}>{message}</Alert>}
     </Stack>
@@ -132,6 +132,6 @@ export function SpeakButton({ text }: { text: string }) {
 
   if (!available) return <Typography variant="caption">Thiết bị không hỗ trợ đọc thành tiếng; nội dung văn bản vẫn hiển thị.</Typography>
   return speaking
-    ? <Button size="small" onClick={stop}>Dừng đọc</Button>
-    : <Button size="small" onClick={speak}>Đọc câu trả lời</Button>
+    ? <Button size="small" variant="text" onClick={stop}>Dừng đọc</Button>
+    : <Button size="small" variant="text" onClick={speak}>Đọc câu trả lời</Button>
 }

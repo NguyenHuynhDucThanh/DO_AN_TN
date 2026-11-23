@@ -3,6 +3,7 @@ import { Alert, Button, Card, CardContent, Dialog, DialogActions, DialogContent,
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Link as RouterLink } from 'react-router-dom'
 import { z } from 'zod'
 import { EmptyState, ErrorState, LoadingState } from '../../components/AsyncState'
 import { PageHeader } from '../../components/PageHeader'
@@ -25,7 +26,7 @@ export function PatientAppointmentsPage() {
   return (
     <>
       <PageHeader eyebrow="Dành cho người bệnh" title="Lịch hẹn của tôi" description="Theo dõi lịch sắp tới và những lịch đã hủy." />
-      {query.isPending ? <LoadingState /> : query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : query.data.length === 0 ? <EmptyState title="Bạn chưa có lịch hẹn" description="Tìm một khung giờ phù hợp để đặt lịch khám đầu tiên." /> : (
+      {query.isPending ? <LoadingState /> : query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : query.data.length === 0 ? <EmptyState title="Bạn chưa có lịch hẹn" description="Tìm một khung giờ phù hợp để đặt lịch khám đầu tiên." action={<Button component={RouterLink} to="/booking" variant="contained">Tìm lịch khám</Button>} /> : (
         <Stack spacing={2}>
           {query.data.map((appointment) => (
             <Card key={appointment.id}><CardContent><Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'space-between' }}>
@@ -49,7 +50,7 @@ export function PatientAppointmentsPage() {
         <form onSubmit={form.handleSubmit((values) => cancellation.mutate(values))}>
           <DialogTitle>Xác nhận hủy lịch</DialogTitle>
           <DialogContent><Stack spacing={2} sx={{ pt: 1 }}><Alert severity="warning">Lịch hẹn sau khi hủy vẫn được lưu trong lịch sử của bạn.</Alert><TextField autoFocus fullWidth multiline minRows={3} label="Lý do hủy" {...form.register('reason')} error={Boolean(form.formState.errors.reason)} helperText={form.formState.errors.reason?.message} />{cancellation.isError && <ErrorState error={cancellation.error} />}</Stack></DialogContent>
-          <DialogActions><Button onClick={() => setCancelId(null)}>Giữ lịch</Button><Button type="submit" color="error" variant="contained" disabled={cancellation.isPending}>Xác nhận hủy</Button></DialogActions>
+          <DialogActions><Button onClick={() => setCancelId(null)}>Giữ lịch</Button><Button type="submit" color="error" variant="contained" disabled={cancellation.isPending}>{cancellation.isPending ? 'Đang hủy…' : 'Xác nhận hủy'}</Button></DialogActions>
         </form>
       </Dialog>
     </>

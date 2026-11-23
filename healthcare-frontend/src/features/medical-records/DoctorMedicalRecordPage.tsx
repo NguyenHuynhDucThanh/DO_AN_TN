@@ -59,8 +59,9 @@ export function DoctorMedicalRecordPage() {
   return (
     <>
       <PageHeader eyebrow="Dành cho bác sĩ" title={record.data ? 'Cập nhật hồ sơ khám' : 'Lập hồ sơ khám'} description="Ghi nhận kết quả sau khi hoàn thành buổi khám được phân công." />
-      <Alert severity="warning" sx={{ mb: 2 }}>Đây là thông tin riêng tư. Chỉ nhập dữ liệu phù hợp với phạm vi sử dụng của hệ thống.</Alert>
-      <Card><CardContent sx={{ p: { xs: 3, md: 5 } }}>
+      <Stack spacing={2} sx={{ maxWidth: 980 }}>
+      <Alert severity="warning">Đây là thông tin riêng tư. Chỉ nhập dữ liệu phù hợp với phạm vi sử dụng của hệ thống.</Alert>
+      <Card><CardContent sx={{ p: { xs: 3, md: 4 } }}>
         <form onSubmit={form.handleSubmit((values) => save.mutate(values))}>
           <Stack spacing={2.5}>
             <TextField multiline minRows={3} label="Triệu chứng ghi nhận" {...form.register('symptoms')} error={Boolean(form.formState.errors.symptoms)} helperText={form.formState.errors.symptoms?.message} />
@@ -69,10 +70,11 @@ export function DoctorMedicalRecordPage() {
             <TextField multiline minRows={3} label="Hướng dẫn sau khám" {...form.register('follow_up_instructions')} error={Boolean(form.formState.errors.follow_up_instructions)} helperText={form.formState.errors.follow_up_instructions?.message} />
             {save.isError && <ErrorState error={save.error} />}
             {save.isSuccess && <Alert severity="success">Hồ sơ khám đã được lưu thành công.</Alert>}
-            <Button type="submit" variant="contained" size="large" disabled={save.isPending}>{save.isPending ? 'Đang lưu…' : record.data ? 'Lưu cập nhật' : 'Tạo hồ sơ khám'}</Button>
+            <Button type="submit" variant="contained" size="large" disabled={save.isPending} sx={{ alignSelf: { sm: 'flex-start' }, minWidth: 200 }}>{save.isPending ? 'Đang lưu…' : record.data ? 'Lưu cập nhật' : 'Tạo hồ sơ khám'}</Button>
           </Stack>
         </form>
       </CardContent></Card>
+      </Stack>
     </>
   )
 }

@@ -5,13 +5,13 @@ const labels: Record<string, string> = {
   CANCELLED: 'Đã hủy',
   AVAILABLE: 'Còn trống',
   BOOKED: 'Đã đặt',
-  BLOCKED: 'Đã khóa',
+  BLOCKED: 'Tạm khóa',
   CONFIRMED: 'Đã xác nhận',
-  COMPLETED: 'Đã khám',
+  COMPLETED: 'Đã hoàn tất',
   NO_SHOW: 'Không đến',
-  PENDING: 'Chờ xử lý',
+  PENDING: 'Chờ tiếp nhận',
   IN_PROGRESS: 'Đang xử lý',
-  RESOLVED: 'Đã giải quyết',
+  RESOLVED: 'Đã hoàn tất',
   APPROVED: 'Đã duyệt',
   REJECTED: 'Từ chối',
   INACTIVE: 'Ngừng hoạt động',
@@ -32,5 +32,5 @@ const colors: Record<string, ChipProps['color']> = {
 }
 
 export function StatusChip({ value, label }: { value: string; label?: string }) {
-  return <Chip size="small" label={label ?? labels[value] ?? 'Không xác định'} color={colors[value] ?? 'default'} />
+  return <Chip size="small" variant="outlined" label={label ?? labels[value] ?? 'Không xác định'} color={colors[value] ?? 'default'} />
 }

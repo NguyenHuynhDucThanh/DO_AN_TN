@@ -16,14 +16,14 @@ export function PageHeader({
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
       spacing={2}
-      sx={{ mb: 3, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'flex-end' } }}
+      sx={{ mb: { xs: 3, md: 4 }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' } }}
     >
-      <Stack spacing={0.75}>
-        {eyebrow && <Typography variant="overline" color="primary.main">{eyebrow}</Typography>}
-        <Typography variant="h2">{title}</Typography>
-        {description && <Typography color="text.secondary" sx={{ maxWidth: 720 }}>{description}</Typography>}
+      <Stack spacing={0.65} sx={{ minWidth: 0 }}>
+        {eyebrow && <Typography variant="overline" color="primary.dark">{eyebrow}</Typography>}
+        <Typography component="h1" variant="h2">{title}</Typography>
+        {description && <Typography color="text.secondary" sx={{ maxWidth: 760 }}>{description}</Typography>}
       </Stack>
-      {action}
+      {action && <Stack direction="row" sx={{ flexShrink: 0 }}>{action}</Stack>}
     </Stack>
   )
 }

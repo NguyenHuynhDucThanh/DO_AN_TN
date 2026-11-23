@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Button, Card, CardContent, Grid, Link, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Button, Grid, Link, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom'
@@ -37,8 +37,7 @@ export function RegisterPage() {
     }
   }
   return (
-    <Card sx={{ maxWidth: 760, mx: 'auto' }}>
-      <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+    <Paper variant="outlined" sx={{ maxWidth: 780, mx: 'auto', p: { xs: 3, sm: 5 } }}>
         <Stack component="form" spacing={2.5} onSubmit={form.handleSubmit(submit)}>
           <Stack spacing={0.75}>
             <Typography variant="overline" color="primary">Tài khoản người bệnh</Typography>
@@ -57,7 +56,6 @@ export function RegisterPage() {
           <Button type="submit" variant="contained" size="large" disabled={form.formState.isSubmitting}>Tạo tài khoản</Button>
           <Typography color="text.secondary">Đã có tài khoản? <Link component={RouterLink} to="/login">Đăng nhập</Link></Typography>
         </Stack>
-      </CardContent>
-    </Card>
+    </Paper>
   )
 }

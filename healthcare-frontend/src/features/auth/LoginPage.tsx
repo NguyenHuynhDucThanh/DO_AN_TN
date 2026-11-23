@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Button, Card, CardContent, Link, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Button, Link, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link as RouterLink, Navigate, useLocation, useNavigate } from 'react-router-dom'
@@ -31,8 +31,7 @@ export function LoginPage() {
     }
   }
   return (
-    <Card sx={{ maxWidth: 520, mx: 'auto' }}>
-      <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+    <Paper variant="outlined" sx={{ maxWidth: 520, mx: 'auto', p: { xs: 3, sm: 5 } }}>
         <Stack component="form" spacing={2.5} onSubmit={form.handleSubmit(submit)}>
           <Stack spacing={0.75}>
             <Typography variant="overline" color="primary">Tài khoản</Typography>
@@ -45,7 +44,6 @@ export function LoginPage() {
           <Button type="submit" variant="contained" size="large" disabled={form.formState.isSubmitting}>Đăng nhập</Button>
           <Typography color="text.secondary">Chưa có tài khoản? <Link component={RouterLink} to="/register">Đăng ký</Link></Typography>
         </Stack>
-      </CardContent>
-    </Card>
+    </Paper>
   )
 }

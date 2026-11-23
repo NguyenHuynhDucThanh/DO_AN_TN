@@ -65,7 +65,7 @@ export function BookingPage() {
   return (
     <>
       <PageHeader eyebrow="Đặt lịch khám" title="Chọn khung giờ khám" description="Chọn chuyên khoa, bác sĩ và thời gian phù hợp. Khung giờ sẽ được kiểm tra lại khi bạn xác nhận." />
-      <Card sx={{ mb: 3 }}><CardContent sx={{ p: 3 }}>
+      <Card sx={{ mb: 3, bgcolor: '#fbfdfc' }}><CardContent>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 3 }}><FormControl fullWidth><InputLabel id="booking-specialty-label">Chuyên khoa</InputLabel><Select labelId="booking-specialty-label" label="Chuyên khoa" value={selectedSpecialtyValue} onChange={(event) => updateParam('specialty', event.target.value)}><MenuItem value="">Tất cả</MenuItem>{specialties.data?.map((item) => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>)}</Select></FormControl></Grid>
           <Grid size={{ xs: 12, md: 3 }}><FormControl fullWidth><InputLabel id="booking-doctor-label">Bác sĩ</InputLabel><Select labelId="booking-doctor-label" label="Bác sĩ" value={selectedDoctorValue} onChange={(event) => updateParam('doctor', event.target.value)}><MenuItem value="">Tất cả</MenuItem>{doctors.data?.map((item) => <MenuItem key={item.id} value={item.id}>{item.user.full_name}</MenuItem>)}</Select></FormControl></Grid>
@@ -78,13 +78,13 @@ export function BookingPage() {
           <Grid container spacing={2}>
             {slots.data.map((slot) => (
               <Grid key={slot.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-                <Card variant={selectedSlotId === slot.id ? 'outlined' : undefined} sx={{ borderColor: selectedSlotId === slot.id ? 'primary.main' : undefined }}>
+                <Card sx={{ height: '100%', borderWidth: selectedSlotId === slot.id ? 2 : 1, borderColor: selectedSlotId === slot.id ? 'primary.main' : 'divider', bgcolor: selectedSlotId === slot.id ? '#f4faf8' : 'background.paper' }}>
                   <CardContent>
                     <Typography variant="overline" color="primary.main">{slot.specialty_name}</Typography>
                     <Typography variant="h3" sx={{ mb: 0.75 }}>{slot.doctor_name}</Typography>
                     <Typography><strong>Bắt đầu:</strong> {formatDateTime(slot.start_at)}</Typography>
                     <Typography color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}><strong>Kết thúc:</strong> {formatDateTime(slot.end_at)}</Typography>
-                    <Button fullWidth variant={selectedSlotId === slot.id ? 'contained' : 'outlined'} onClick={() => form.setValue('slotId', slot.id, { shouldValidate: true })}>Chọn khung giờ</Button>
+                    <Button fullWidth aria-pressed={selectedSlotId === slot.id} variant={selectedSlotId === slot.id ? 'contained' : 'outlined'} onClick={() => form.setValue('slotId', slot.id, { shouldValidate: true })}>{selectedSlotId === slot.id ? 'Đã chọn' : 'Chọn khung giờ'}</Button>
                   </CardContent>
                 </Card>
               </Grid>
@@ -96,7 +96,7 @@ export function BookingPage() {
             {form.formState.errors.confirmed && <Alert severity="warning">{form.formState.errors.confirmed.message}</Alert>}
             {booking.isError && <ErrorState error={booking.error} />}
             {booking.isSuccess && <Alert severity="success">Đặt lịch thành công. Bạn có thể xem lại trong mục Lịch hẹn của tôi.</Alert>}
-            <Button type="submit" variant="contained" size="large" disabled={booking.isPending}>{booking.isPending ? 'Đang xác nhận…' : 'Xác nhận đặt lịch'}</Button>
+            <Button type="submit" variant="contained" size="large" disabled={booking.isPending} sx={{ alignSelf: { sm: 'flex-start' }, minWidth: 220 }}>{booking.isPending ? 'Đang xác nhận…' : 'Xác nhận đặt lịch'}</Button>
           </Stack>
         </form>
       )}

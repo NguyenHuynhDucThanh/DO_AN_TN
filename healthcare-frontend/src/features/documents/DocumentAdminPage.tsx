@@ -36,7 +36,7 @@ function RejectDialog({ document, onClose }: { document: DocumentMetadata; onClo
       {reject.isError && <ErrorState error={reject.error} />}
       <TextField autoFocus multiline minRows={3} label="Lý do từ chối" value={reason} onChange={(event) => setReason(event.target.value)} error={Boolean(validation)} helperText={validation} />
     </Stack></DialogContent>
-    <DialogActions><Button onClick={onClose} disabled={reject.isPending}>Đóng</Button><Button color="error" variant="contained" onClick={submit} disabled={reject.isPending}>{reject.isPending ? 'Đang gửi…' : 'Xác nhận từ chối'}</Button></DialogActions>
+    <DialogActions><Button onClick={onClose} disabled={reject.isPending}>Hủy</Button><Button color="error" variant="contained" onClick={submit} disabled={reject.isPending}>{reject.isPending ? 'Đang gửi…' : 'Xác nhận từ chối'}</Button></DialogActions>
   </Dialog>
 }
 
@@ -68,8 +68,8 @@ function DocumentCard({ item, isAdmin, onReject }: { item: DocumentMetadata; isA
     {isAdmin && <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
       <Button size="small" variant="outlined" onClick={() => download.mutate()} disabled={download.isPending}>{download.isPending ? 'Đang mở…' : 'Kiểm tra tệp'}</Button>
       {item.approval_status === 'PENDING' && <Button size="small" variant="contained" onClick={() => approve.mutate()} disabled={approve.isPending}>{approve.isPending ? 'Đang duyệt…' : 'Duyệt'}</Button>}
-      {item.approval_status === 'PENDING' && <Button size="small" color="error" onClick={() => onReject(item)}>Từ chối</Button>}
-      {canIngest && <Button size="small" variant="contained" color="secondary" onClick={() => ingest.mutate()} disabled={ingest.isPending}>{ingest.isPending ? 'Đang xử lý…' : item.ingestion_status === 'FAILED' ? 'Thử xử lý lại' : 'Đưa vào kho tri thức'}</Button>}
+      {item.approval_status === 'PENDING' && <Button size="small" color="error" variant="text" onClick={() => onReject(item)}>Từ chối</Button>}
+      {canIngest && <Button size="small" variant="outlined" onClick={() => ingest.mutate()} disabled={ingest.isPending}>{ingest.isPending ? 'Đang xử lý…' : item.ingestion_status === 'FAILED' ? 'Thử xử lý lại' : 'Đưa vào kho tri thức'}</Button>}
     </Stack>}
   </Stack></CardContent></Card>
 }

@@ -69,7 +69,7 @@ describe('Phase 10 Risk Alert UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Gửi' }))
 
     expect(await screen.findByLabelText('Cảnh báo an toàn khẩn cấp')).toBeInTheDocument()
-    expect(screen.getByText(/chưa thể tạo tự động/)).toBeInTheDocument()
+    expect(screen.getByText(/chưa thể tạo yêu cầu hỗ trợ tự động/i)).toBeInTheDocument()
     expect(screen.getByText(/liên hệ thủ công/)).toBeInTheDocument()
   })
 })
